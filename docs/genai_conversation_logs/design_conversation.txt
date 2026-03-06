@@ -1,0 +1,2412 @@
+----------------------------------------------------------------------------------
+Conversation Link: https://chatgpt.com/share/69aada0d-0970-8008-b51b-8e78478d0914
+----------------------------------------------------------------------------------
+
+
+
+
+----------------------------------------------------------------------------------
+Raw Text (in case of broken link for some reason): 
+----------------------------------------------------------------------------------
+
+
+COMP3011_Coursework1_Brief__2025_2026 (1).pdf
+PDF
+hotel bookings
+
+
+I am building a COMP3011 API coursework project using the Hotel Booking Demand dataset. I do not want a basic CRUD-only hotel review API. Give me 3 stronger project concepts that combine this dataset with user-submitted database content, such as reviews, incident reports, or manager notes. For each concept, explain the real-world use case, why it is more creative than a simple ratings API, and which one is most suitable for a high-mark REST API coursework submission.
+
+I’m matching the ideas to what the brief seems to reward most: originality, database-backed CRUD, analytics beyond basic endpoints, and something you can defend well in the oral exam.
+
+Thought for 5s
+Here are 3 stronger COMP3011 project concepts built around the Hotel Booking Demand dataset, combined with user-submitted database content. I’m judging them against the brief’s emphasis on creativity, advanced design, justification of choices, analytics, and high-level use of GenAI, not just minimum CRUD. 
+COMP3011_Coursework1_Brief__202…
+
+
+1) Hotel Risk & Operations Intelligence API
+Core idea
+Build an API for hotel operations and risk monitoring.
+Use the dataset as the historical booking layer, then add user-submitted data such as:
+
+incident reports from staff
+
+manager notes
+
+maintenance/service disruption logs
+
+special event / overbooking alerts
+
+guest complaint categories
+
+The API would not just store records. It would produce operational risk insights such as:
+
+dates or booking types linked to higher cancellation risk
+
+customer segments associated with repeated issues
+
+lead-time patterns tied to no-shows or last-minute changes
+
+room demand pressure periods where incidents spike
+
+hotel-level “operational stress” indicators
+
+Real-world use case
+A hotel operations manager wants to know:
+
+when the hotel is likely to face disruption
+
+which booking patterns correlate with operational issues
+
+whether guest problems are linked to season, market segment, deposit type, or booking channel
+
+which internal notes or incidents need escalation
+
+This makes the API useful for decision support, not just storing reviews.
+
+Why it is more creative than a simple ratings API
+A ratings API is passive: users leave stars and comments.
+This concept is active and analytical: it combines historical booking behaviour with live operational reports to support actions such as staffing, overbooking prevention, escalation, and service recovery.
+
+It also gives you room for stronger endpoints such as:
+
+/analytics/cancellation-risk
+
+/analytics/incident-hotspots
+
+/hotels/{id}/operational-summary
+
+/incidents
+
+/manager-notes
+
+/alerts/high-risk-periods
+
+That is much more coursework-worthy than “create review / get review / update review / delete review”.
+
+Why it suits a high-mark submission
+This is probably the strongest academic fit because it naturally supports:
+
+multi-table relational design
+
+CRUD for incidents, notes, alerts, follow-ups
+
+meaningful analytics endpoints
+
+filtering, aggregation, and derived scores
+
+clear justification of database schema and REST design
+
+a compelling oral demo: “Here is historical booking demand, here is live staff data, and here is how the API generates operational intelligence”
+
+It aligns well with the brief’s push toward originality and advanced features beyond basic CRUD. 
+COMP3011_Coursework1_Brief__202…
+
+
+2) Hotel Revenue Recovery & Cancellation Intervention API
+Core idea
+Build an API focused on recovering revenue from risky bookings.
+
+Use the booking dataset to analyse patterns around:
+
+cancellations
+
+repeated customer behaviour
+
+deposit types
+
+lead times
+
+ADR trends
+
+market segments
+
+Then add user-submitted database content such as:
+
+manager intervention notes
+
+manual retention actions taken on bookings
+
+custom offers / incentives
+
+rebooking attempts
+
+cancellation reasons
+
+follow-up outcomes
+
+The API becomes a system for understanding not just what happened historically, but what staff did in response and whether those actions worked.
+
+Real-world use case
+A revenue manager wants to reduce lost income from cancellations.
+They need to know:
+
+which future bookings look similar to previously cancelled ones
+
+whether certain interventions work better for certain segments
+
+whether direct channel customers respond differently from OTA customers
+
+how deposit policy relates to cancellation behaviour
+
+Why it is more creative than a simple ratings API
+Instead of collecting opinions, this concept models a business process:
+detect risk → record intervention → track outcome → analyse effectiveness.
+
+That is much closer to a professional back-end system. It turns the dataset into the foundation for a decision-support and recovery workflow.
+
+Possible endpoints:
+
+/bookings/risk-score
+
+/interventions
+
+/interventions/{id}/outcome
+
+/analytics/cancellation-patterns
+
+/analytics/intervention-effectiveness
+
+/customers/{id}/retention-history
+
+Why it suits a high-mark submission
+This is a very strong choice because it shows:
+
+thoughtful business modelling
+
+strong relational schema design
+
+clear CRUD beyond a toy example
+
+useful computed endpoints and summary resources
+
+good material for Q&A on trade-offs and architecture
+
+Its only weakness is that it can become a bit abstract if your demo does not clearly show the workflow. You would need to present the domain carefully so examiners immediately see the value.
+
+3) Guest Experience Assurance API
+Core idea
+Build an API for tracking guest experience quality and service recovery.
+
+Use the dataset to understand booking context, then combine it with user-submitted data such as:
+
+guest reviews
+
+complaint tickets
+
+service recovery actions
+
+manager responses
+
+housekeeping or front-desk notes
+
+issue severity and resolution status
+
+The key difference from a normal review API is that reviews are only one part of a larger case-management system.
+
+For example, a negative review can become a complaint case, be assigned to a manager, receive follow-up actions, and later be marked resolved. The API can also analyse whether certain booking types are associated with worse experiences.
+
+Real-world use case
+A hotel wants to improve service quality by identifying:
+
+which categories of guests complain most
+
+whether long stays or family bookings create different issue types
+
+whether certain months or channels produce more complaints
+
+how quickly issues are resolved
+
+whether resolution quality affects later ratings
+
+Why it is more creative than a simple ratings API
+A normal ratings API just stores sentiment.
+This one models the full service lifecycle:
+
+review → complaint → response → resolution → reporting
+
+That makes it more realistic and much more defensible in a viva/oral exam.
+
+Possible endpoints:
+
+/reviews
+
+/complaints
+
+/complaints/{id}/resolution
+
+/manager-responses
+
+/analytics/complaint-trends
+
+/analytics/experience-by-segment
+
+Why it suits a high-mark submission
+It is stronger than a plain review system because it introduces:
+
+richer domain logic
+
+multiple related resources
+
+status changes and workflows
+
+analytics over operational and customer data
+
+But among the three, it is slightly less distinctive because “reviews + complaints” is a more familiar pattern than risk intelligence or revenue recovery.
+
+Best choice for a high-mark REST API submission
+Best overall: Hotel Risk & Operations Intelligence API
+This is the one I would recommend most.
+
+Why this is the best one
+It gives you the best balance of:
+
+creativity
+
+clear real-world value
+
+strong relational modelling
+
+REST-friendly resources
+
+analytics endpoints
+
+oral exam explainability
+
+It also feels closest to the marking language in the brief: the brief rewards originality, advanced methodologies, creative data design, strong architecture, and higher-level use of GenAI for exploring alternatives rather than only implementing CRUD. 
+COMP3011_Coursework1_Brief__202…
+
+
+Why it beats the others
+It is more distinctive than a guest reviews system.
+
+It is easier to visualise and defend than a pure revenue intervention system.
+
+It naturally supports both:
+
+core CRUD resources for the pass requirements
+
+advanced analytics for higher bands
+
+What makes it strong in your presentation
+In the demo, you can say:
+
+“I used the historical booking dataset as the baseline demand layer, then designed additional operational resources such as incidents, manager notes, and alerts. My API does not only persist records; it exposes analytical endpoints that help identify high-risk periods, operational hotspots, and booking-pattern-linked disruption.”
+
+That sounds much more mature than:
+
+“Users can leave hotel ratings and comments.”
+
+My ranking
+1. Hotel Risk & Operations Intelligence API
+Best for originality, analytics, and oral defence.
+
+2. Hotel Revenue Recovery & Cancellation Intervention API
+Very strong and business-focused, especially if you want to emphasise booking analytics.
+
+3. Guest Experience Assurance API
+Still good, but closer to common review/complaint systems, so less distinctive.
+
+Recommendation
+Go with Hotel Risk & Operations Intelligence API.
+
+It is the most likely to feel like a real system, not a student CRUD app with hotel ratings added on top. It also gives you lots to talk about in your report and oral exam: data modelling, derived metrics, endpoint design, business logic, validation, error handling, and future extensions like risk scoring or alerting. 
+COMP3011_Coursework1_Brief__202…
+
+
+I can turn the best concept into a full coursework-ready proposal next: entities, SQL schema, example endpoints, analytics routes, and a 5-minute presentation angle.
+
+
+Sources
+
+Here are the main fields in my hotel dataset: hotel, is_canceled, lead_time, arrival_date_year, arrival_date_month, stays_in_weekend_nights, stays_in_week_nights, adults, children, babies, meal, country, market_segment, distribution_channel, is_repeated_guest, previous_cancellations, previous_bookings_not_canceled, reserved_room_type, assigned_room_type, booking_changes, deposit_type, days_in_waiting_list, customer_type, adr, required_car_parking_spaces, total_of_special_requests, reservation_status, reservation_status_date. Help me turn this into a relational SQL design. Which tables should come directly from the dataset, which tables should be user-created for CRUD, and what should the primary keys and foreign keys be?
+
+To design a strong relational schema for your COMP3011 API, the key idea is:
+
+The dataset represents historical bookings
+
+Your API adds operational/user-generated data
+
+The schema must show normalisation, relationships, and extensibility
+
+A good design separates reference data, booking data, and user-submitted operational data.
+
+Below is a clean architecture that examiners will recognise as well-designed relational modelling.
+
+1. Core Concept: Three Layers
+1️⃣ Dataset layer (imported historical data)
+Tables created directly from the dataset.
+
+Example:
+
+bookings
+
+hotels
+
+customers
+
+room_types
+
+reservation_statuses
+
+These store the original hotel demand data.
+
+2️⃣ Reference tables (normalised categorical values)
+The dataset contains many repeating text values that should be normalised.
+
+Example:
+
+meal
+
+country
+
+market_segment
+
+distribution_channel
+
+deposit_type
+
+customer_type
+
+Instead of repeating strings, use IDs referencing lookup tables.
+
+3️⃣ User-generated operational data (CRUD endpoints)
+These are tables created by your API.
+
+Example:
+
+incidents
+
+manager_notes
+
+operational_alerts
+
+service_reports
+
+booking_tags
+
+These tables make the project more than just a dataset viewer.
+
+2. Core Tables From the Dataset
+Hotels
+hotels
+------
+hotel_id (PK)
+hotel_name
+Dataset values typically:
+
+Resort Hotel
+
+City Hotel
+
+Countries
+countries
+---------
+country_code (PK)
+country_name
+Referenced by bookings.
+
+Market Segments
+market_segments
+---------------
+segment_id (PK)
+segment_name
+Examples:
+
+Online TA
+
+Corporate
+
+Direct
+
+Groups
+
+Distribution Channels
+distribution_channels
+---------------------
+channel_id (PK)
+channel_name
+Examples:
+
+TA/TO
+
+Direct
+
+Corporate
+
+Meal Plans
+meals
+-----
+meal_id (PK)
+meal_type
+Examples:
+
+BB
+
+HB
+
+FB
+
+SC
+
+Deposit Types
+deposit_types
+-------------
+deposit_type_id (PK)
+deposit_type
+Examples:
+
+No Deposit
+
+Non Refund
+
+Refundable
+
+Customer Types
+customer_types
+--------------
+customer_type_id (PK)
+customer_type
+Examples:
+
+Transient
+
+Contract
+
+Group
+
+Transient-Party
+
+Room Types
+room_types
+----------
+room_type_id (PK)
+room_code
+Used for:
+
+reserved_room_type
+
+assigned_room_type
+
+3. Main Booking Table
+This is the core table derived from the dataset.
+
+bookings
+--------
+booking_id (PK)
+
+hotel_id (FK → hotels)
+
+lead_time
+arrival_year
+arrival_month
+
+weekend_nights
+week_nights
+
+adults
+children
+babies
+
+meal_id (FK → meals)
+country_code (FK → countries)
+
+market_segment_id (FK → market_segments)
+distribution_channel_id (FK → distribution_channels)
+
+is_repeated_guest
+
+previous_cancellations
+previous_bookings_not_canceled
+
+reserved_room_type_id (FK → room_types)
+assigned_room_type_id (FK → room_types)
+
+booking_changes
+
+deposit_type_id (FK → deposit_types)
+
+days_in_waiting_list
+
+customer_type_id (FK → customer_types)
+
+adr
+
+required_car_parking_spaces
+
+total_special_requests
+
+reservation_status
+reservation_status_date
+
+is_canceled
+This table captures all booking demand data.
+
+4. Optional Reservation Status Table
+Better design than keeping status as text.
+
+reservation_statuses
+--------------------
+status_id (PK)
+status_name
+Examples:
+
+Check-Out
+
+Canceled
+
+No-Show
+
+Then:
+
+bookings.status_id → reservation_statuses.status_id
+5. User-Generated Tables (CRUD)
+These make your API much stronger academically.
+
+Incident Reports
+Staff can report operational issues related to bookings.
+
+incidents
+---------
+incident_id (PK)
+
+booking_id (FK → bookings)
+
+incident_type
+severity_level
+description
+
+reported_by
+reported_date
+
+status
+Example incident:
+
+“Guest complaint about incorrect room type”
+
+Manager Notes
+Managers attach internal notes to bookings.
+
+manager_notes
+-------------
+note_id (PK)
+
+booking_id (FK → bookings)
+
+note_text
+created_by
+created_at
+Operational Alerts
+Used for identifying risky bookings.
+
+operational_alerts
+------------------
+alert_id (PK)
+
+booking_id (FK → bookings)
+
+alert_type
+alert_message
+
+risk_score
+
+created_at
+Example:
+
+“High cancellation risk due to long lead time + previous cancellations”
+
+Booking Tags
+Allows staff to categorize bookings.
+
+booking_tags
+------------
+tag_id (PK)
+tag_name
+Join table:
+
+booking_tag_map
+---------------
+booking_id (FK)
+tag_id (FK)
+
+PRIMARY KEY (booking_id, tag_id)
+Example tags:
+
+VIP
+
+High Risk
+
+Corporate Priority
+
+Special Assistance
+
+6. Entity Relationship Overview
+Conceptually your schema becomes:
+
+Hotels
+   │
+   │
+Bookings
+   │
+   ├── Countries
+   ├── Market Segments
+   ├── Distribution Channels
+   ├── Deposit Types
+   ├── Room Types
+   ├── Meals
+   ├── Customer Types
+
+Bookings
+   │
+   ├── Incidents
+   ├── Manager Notes
+   ├── Operational Alerts
+   └── Booking Tags
+7. Example High-Level API Endpoints
+Because of this schema you can build endpoints like:
+
+Dataset exploration
+GET /bookings
+GET /bookings/{id}
+GET /analytics/cancellation-rate
+GET /analytics/market-segment-demand
+CRUD operational endpoints
+POST /incidents
+GET /incidents
+
+POST /manager-notes
+GET /manager-notes
+
+POST /alerts
+GET /alerts
+Analytical endpoints
+GET /analytics/high-risk-bookings
+GET /analytics/cancellation-by-segment
+GET /analytics/adr-by-hotel
+8. Why This Design Scores Well
+Your coursework will show:
+
+✔ Normalization
+✔ Relational integrity (PK/FK)
+✔ Meaningful CRUD resources
+✔ Real-world modelling
+✔ Expandable architecture
+
+Instead of:
+
+“reviews table attached to bookings”
+
+You have a small operational hotel management system.
+
+9. Key Tip for Your Report
+Explain your architecture like this:
+
+The booking dataset was treated as historical operational data. The system extends this dataset through user-generated resources such as incident reports, manager notes, and operational alerts. This allows the API to support both historical analysis and real-time operational insights.
+
+That line alone sounds like a first-class design justification.
+
+✅ If you want, I can also show you the complete SQL schema (CREATE TABLE statements) for all tables so you can drop it straight into PostgreSQL/MySQL for the coursework.
+
+
+My coursework requires at least one full CRUD model connected to a database, but I want the CRUD part to feel meaningful rather than artificial. Compare these options for my main CRUD entity: hotel reviews, incident reports, manager notes, and pricing adjustments. Which one gives me the best mix of realism, easy demonstration, validation opportunities, and strong viva discussion? Also tell me whether I should implement one main CRUD model or two.
+
+For your COMP3011 coursework, the main goal of the CRUD entity is not just “does it work”, but:
+
+it feels realistic
+
+it links clearly to the dataset
+
+it allows validation rules
+
+it creates interesting endpoints for the viva
+
+it is easy to demo in 2–3 minutes
+
+Below is a comparison of the four options based on those criteria.
+
+1. Hotel Reviews
+Idea
+Users leave ratings and comments for bookings or hotels.
+
+Example:
+
+review_id
+booking_id
+rating
+review_text
+created_at
+Pros
+Very easy CRUD demonstration
+
+Everyone understands reviews
+
+Easy validation (rating 1–5)
+
+Cons
+Very common coursework idea
+
+Feels like a basic CRUD demo
+
+Weak connection to the dataset fields
+
+Hard to build deeper analytics
+
+Viva discussion strength
+Low.
+
+Examiner will likely ask:
+
+“Why did you choose reviews?”
+
+Hard to give a compelling answer.
+
+Verdict
+Good technically, but too generic.
+
+2. Incident Reports
+Idea
+Staff record operational problems linked to bookings.
+
+Example:
+
+room not ready
+
+wrong room type
+
+guest complaint
+
+overbooking
+
+maintenance issue
+
+incident_id
+booking_id
+incident_type
+severity
+description
+reported_by
+status
+created_at
+Pros
+Very strong real-world logic.
+
+Directly connected to dataset fields such as:
+
+reserved_room_type vs assigned_room_type
+
+booking_changes
+
+special_requests
+
+cancellations
+
+ADR
+
+You can explain things like:
+
+“Incidents help hotels identify operational risk patterns tied to booking behaviour.”
+
+Good validation opportunities
+Examples:
+
+severity must be 1–5
+status ∈ {open, investigating, resolved}
+booking_id must exist
+Nice API demo
+POST /incidents
+GET /incidents
+PATCH /incidents/{id}
+DELETE /incidents/{id}
+Interesting analytics endpoints
+GET /analytics/incidents-by-hotel
+GET /analytics/incidents-by-market-segment
+GET /analytics/high-risk-bookings
+Viva discussion strength
+Very strong.
+
+You can talk about:
+
+operational management
+
+data-driven hotel insights
+
+linking incidents with booking patterns
+
+Verdict
+Excellent CRUD model.
+
+3. Manager Notes
+Idea
+Managers attach internal notes to bookings.
+
+Example:
+
+note_id
+booking_id
+note_text
+author
+created_at
+Pros
+Easy CRUD
+
+Realistic internal system
+
+Cons
+Very simple schema
+
+Limited validation
+
+Harder to build analytics
+
+Feels like a text comments table
+
+Viva discussion strength
+Moderate.
+
+It’s realistic but not very interesting technically.
+
+Verdict
+Good secondary CRUD, but weak as the main one.
+
+4. Pricing Adjustments
+Idea
+Managers manually adjust room prices.
+
+Example:
+
+adjustment_id
+hotel_id
+date
+adjustment_type
+amount
+reason
+created_by
+Pros
+Very interesting business logic.
+
+Connected to dataset field:
+
+adr (average daily rate)
+You could justify:
+
+peak demand
+
+cancellation risk
+
+events
+
+Good validation
+Examples:
+
+amount must be numeric
+adjustment_type ∈ {increase, decrease}
+date must be future
+Good analytics potential
+GET /analytics/adr-trends
+GET /pricing-adjustments
+Cons
+Slightly harder to explain quickly in a demo.
+
+Also harder to link to specific booking rows.
+
+Viva discussion strength
+Strong but slightly abstract.
+
+Verdict
+Good concept but more complex to demo clearly.
+
+Final Comparison
+CRUD Option	Realism	Demo Ease	Validation	Viva Strength	Overall
+Hotel Reviews	Medium	Very Easy	Simple	Weak	❌
+Incident Reports	Very High	Easy	Strong	Very Strong	⭐ Best
+Manager Notes	Medium	Easy	Weak	Medium	OK
+Pricing Adjustments	High	Medium	Strong	Strong	Good
+Best Choice
+Incident Reports
+This gives the best balance of:
+
+realism
+
+easy CRUD demo
+
+strong validation logic
+
+interesting viva discussion
+
+connection to dataset fields
+
+Example viva explanation:
+
+“Hotels track operational incidents related to bookings, such as incorrect room assignment or guest complaints. My API allows staff to record, update, and resolve incidents linked to booking records. This operational data can then be analysed alongside historical booking demand patterns.”
+
+That answer sounds much stronger than “users can leave reviews.”
+
+Should You Implement One CRUD Model or Two?
+Best approach: one main CRUD + one small supporting CRUD
+Main CRUD
+Incidents
+
+POST /incidents
+GET /incidents
+PATCH /incidents/{id}
+DELETE /incidents/{id}
+Supporting CRUD
+Manager Notes
+
+POST /notes
+GET /notes
+Managers can attach notes to incidents or bookings.
+
+Why two models helps
+It shows better relational design:
+
+bookings
+   │
+   ├── incidents
+   │       │
+   │       └── manager_notes
+And lets you discuss:
+
+foreign keys
+
+relationships
+
+system extensibility
+
+Recommended Architecture
+Dataset tables
+hotels
+bookings
+room_types
+countries
+market_segments
+deposit_types
+customer_types
+CRUD tables
+incidents   ← main CRUD
+manager_notes
+What an examiner likes to see
+Your system looks like:
+
+Operational hotel intelligence API
+
+Instead of:
+
+“hotel reviews app”.
+
+That difference alone pushes projects into higher mark bands.
+
+✅ If you want, I can also show you the 5–6 best API endpoints to impress examiners (the ones that look advanced but take only about 30 lines of code).
+
+
+Design a REST API endpoint structure for a Hotel Booking Intelligence API. I need full CRUD for user-submitted content, but I also want analytical endpoints based on the booking dataset. Suggest a clean endpoint list grouped by resource, including filters, summaries, analytics, and one or two insight-style endpoints. For each endpoint, explain why it exists and what kind of JSON it should return.
+
+Below is a clean REST structure for a Hotel Booking Intelligence API that combines:
+
+dataset exploration (bookings, hotels)
+
+full CRUD for user-submitted operational data
+
+analytics endpoints
+
+insight-style endpoints
+
+This structure looks professional, RESTful, and coursework-appropriate.
+
+1. Core Dataset Resources
+These expose the historical booking data.
+
+They are mostly read-only because the dataset is imported.
+
+Hotels
+GET /hotels
+Return list of hotels.
+
+Why it exists
+
+Basic dataset exploration
+
+Allows filtering bookings by hotel
+
+Example response
+
+[
+  {
+    "hotel_id": 1,
+    "name": "Resort Hotel"
+  },
+  {
+    "hotel_id": 2,
+    "name": "City Hotel"
+  }
+]
+GET /hotels/{hotelId}
+Return details for a single hotel.
+
+Example
+
+{
+  "hotel_id": 1,
+  "name": "Resort Hotel",
+  "total_bookings": 40000,
+  "cancellation_rate": 0.28
+}
+Bookings
+GET /bookings
+Retrieve booking records with filters.
+
+Example filters
+
+/bookings?hotel=Resort%20Hotel
+/bookings?country=PRT
+/bookings?market_segment=Online%20TA
+/bookings?arrival_month=July
+Why it exists
+
+Allows exploration of the dataset.
+
+Example JSON
+
+[
+  {
+    "booking_id": 4023,
+    "hotel": "City Hotel",
+    "arrival_month": "July",
+    "lead_time": 45,
+    "adr": 120.5,
+    "is_canceled": false
+  }
+]
+GET /bookings/{id}
+Return a specific booking.
+
+{
+  "booking_id": 4023,
+  "hotel": "City Hotel",
+  "lead_time": 45,
+  "arrival_month": "July",
+  "market_segment": "Online TA",
+  "adr": 120.5,
+  "is_canceled": false
+}
+2. Main CRUD Resource: Incidents
+This is your primary user-generated model.
+
+Represents operational issues linked to bookings.
+
+POST /incidents
+Create an incident.
+
+Why
+
+Staff report operational issues.
+
+Request
+
+{
+  "booking_id": 4023,
+  "incident_type": "room_issue",
+  "severity": 3,
+  "description": "Guest received wrong room type"
+}
+Response
+
+{
+  "incident_id": 101,
+  "booking_id": 4023,
+  "status": "open",
+  "created_at": "2026-03-06"
+}
+GET /incidents
+List incidents.
+
+Filters
+
+/incidents?severity=4
+/incidents?status=open
+/incidents?hotel=City Hotel
+Response
+
+[
+  {
+    "incident_id": 101,
+    "booking_id": 4023,
+    "severity": 3,
+    "status": "open"
+  }
+]
+GET /incidents/{id}
+Retrieve a single incident.
+
+{
+  "incident_id": 101,
+  "booking_id": 4023,
+  "incident_type": "room_issue",
+  "severity": 3,
+  "description": "Guest received wrong room type",
+  "status": "open"
+}
+PATCH /incidents/{id}
+Update incident fields.
+
+Example:
+
+{
+  "status": "resolved"
+}
+Response:
+
+{
+  "incident_id": 101,
+  "status": "resolved"
+}
+DELETE /incidents/{id}
+Delete incident.
+
+Response:
+
+{
+  "message": "Incident deleted"
+}
+3. Supporting CRUD Resource: Manager Notes
+Allows managers to attach internal notes.
+
+POST /notes
+Create note.
+
+{
+  "booking_id": 4023,
+  "note_text": "Guest requested quiet room"
+}
+Response
+
+{
+  "note_id": 12,
+  "created_at": "2026-03-06"
+}
+GET /notes
+Retrieve notes.
+
+Filter:
+
+/notes?booking_id=4023
+Response
+
+[
+  {
+    "note_id": 12,
+    "booking_id": 4023,
+    "note_text": "Guest requested quiet room"
+  }
+]
+DELETE /notes/{id}
+Remove note.
+
+{
+  "message": "Note removed"
+}
+4. Summary Endpoints
+Provide aggregated dataset insights.
+
+These show your API does more than CRUD.
+
+GET /summaries/cancellations
+Cancellation statistics.
+
+Response:
+
+{
+  "total_bookings": 119390,
+  "cancellations": 44224,
+  "cancellation_rate": 0.37
+}
+GET /summaries/market-segments
+Bookings by market segment.
+
+Response:
+
+[
+  {
+    "segment": "Online TA",
+    "bookings": 56400
+  },
+  {
+    "segment": "Direct",
+    "bookings": 20000
+  }
+]
+GET /summaries/monthly-demand
+Demand by month.
+
+[
+  {
+    "month": "July",
+    "bookings": 15000
+  },
+  {
+    "month": "August",
+    "bookings": 16000
+  }
+]
+5. Analytics Endpoints
+These show real analytical value.
+
+GET /analytics/cancellation-by-segment
+Which segments cancel most.
+
+[
+  {
+    "market_segment": "Online TA",
+    "cancellation_rate": 0.41
+  },
+  {
+    "market_segment": "Direct",
+    "cancellation_rate": 0.15
+  }
+]
+GET /analytics/adr-by-hotel
+Average daily rate comparison.
+
+[
+  {
+    "hotel": "City Hotel",
+    "average_adr": 105.3
+  },
+  {
+    "hotel": "Resort Hotel",
+    "average_adr": 98.7
+  }
+]
+GET /analytics/incidents-by-hotel
+Operational incidents linked to hotels.
+
+[
+  {
+    "hotel": "City Hotel",
+    "incident_count": 54
+  },
+  {
+    "hotel": "Resort Hotel",
+    "incident_count": 32
+  }
+]
+6. Insight-Style Endpoints
+These feel “intelligent” rather than just SQL queries.
+
+They make the project sound more advanced.
+
+GET /insights/high-risk-bookings
+Identify bookings likely to cancel.
+
+Example logic:
+
+long lead time
+
+previous cancellations
+
+non-refundable deposit
+
+Response
+
+[
+  {
+    "booking_id": 2302,
+    "risk_score": 0.82,
+    "reasons": [
+      "high_lead_time",
+      "previous_cancellations"
+    ]
+  }
+]
+GET /insights/operational-hotspots
+Identify periods with high incidents.
+
+[
+  {
+    "month": "August",
+    "incident_rate": 0.15
+  },
+  {
+    "month": "July",
+    "incident_rate": 0.12
+  }
+]
+7. Clean Endpoint Overview
+Dataset
+GET /hotels
+GET /hotels/{id}
+
+GET /bookings
+GET /bookings/{id}
+CRUD (User Data)
+POST /incidents
+GET /incidents
+GET /incidents/{id}
+PATCH /incidents/{id}
+DELETE /incidents/{id}
+
+POST /notes
+GET /notes
+DELETE /notes/{id}
+Summaries
+GET /summaries/cancellations
+GET /summaries/market-segments
+GET /summaries/monthly-demand
+Analytics
+GET /analytics/cancellation-by-segment
+GET /analytics/adr-by-hotel
+GET /analytics/incidents-by-hotel
+Insights
+GET /insights/high-risk-bookings
+GET /insights/operational-hotspots
+Why this API structure is strong
+It shows three levels of API capability:
+
+1️⃣ Data retrieval
+
+/bookings
+2️⃣ Operational CRUD
+
+/incidents
+3️⃣ Analytical intelligence
+
+/analytics
+/insights
+That combination looks much more sophisticated than a simple CRUD coursework.
+
+✅ If you'd like, I can also show you the 5 endpoints examiners love most in viva (the ones that make your project look like a real production API rather than a student assignment).
+
+
+For this coursework, compare FastAPI + PostgreSQL + SQLAlchemy against Express + PostgreSQL + Prisma for my Hotel Booking Intelligence API. I care about clean architecture, validation, API documentation, testing, and ease of oral explanation in the viva. Which stack is better for this specific project, and what folder structure or architectural pattern should I use so my code looks modular and professional?
+
+For your Hotel Booking Intelligence API, both stacks can work well, but they shine in different ways. Since your priorities are:
+
+Clean architecture
+
+Strong validation
+
+Automatic API documentation
+
+Testing
+
+Easy explanation in a viva
+
+the comparison becomes clearer.
+
+1. FastAPI + PostgreSQL + SQLAlchemy
+
+https://miro.medium.com/0%2AyGZ5EF4hsMe2JSOu
+
+https://miro.medium.com/v2/resize%3Afit%3A1400/1%2AmGY6OXkf4AOzfIwp3eZwpw.png
+
+https://fastapi.tiangolo.com/img/tutorial/metadata/image02.png
+4
+Strengths
+1. Built-in validation
+FastAPI uses Pydantic models.
+
+Example:
+
+class IncidentCreate(BaseModel):
+    booking_id: int
+    incident_type: str
+    severity: int = Field(ge=1, le=5)
+Benefits:
+
+automatic validation
+
+clear error responses
+
+less manual checking
+
+In a viva you can say:
+
+“Input validation is handled by Pydantic models which enforce schema constraints before the request reaches the database layer.”
+
+That sounds very strong academically.
+
+2. Automatic API documentation
+FastAPI automatically generates:
+
+Swagger UI
+
+OpenAPI schema
+
+At:
+
+/docs
+/redoc
+You can demo the whole API interactively.
+
+For coursework demos this is excellent.
+
+3. Clean architecture is easy
+FastAPI encourages separation of:
+
+routers
+
+services
+
+schemas
+
+models
+
+This aligns nicely with layered architecture.
+
+4. Very readable code
+Python tends to look simpler and more academic.
+
+That helps in a viva because you can walk through code quickly.
+
+5. Testing
+Works smoothly with:
+
+pytest
+
+httpx
+
+Example:
+
+def test_create_incident():
+    response = client.post("/incidents", json=data)
+    assert response.status_code == 201
+Weaknesses
+ORM setup is slightly more verbose
+
+migrations require Alembic
+
+async SQLAlchemy can be confusing initially
+
+2. Express + PostgreSQL + Prisma
+
+https://www.coreycleary.me/_next/static/media/Express-REST-API-Struc.aa7ecaa0c41dbb7344c70665a5f5e259.png
+
+https://www.prisma.io/blog/posts/grading-app-schema.png
+
+https://miro.medium.com/1%2ACduSgtL14pli4uSWURf19g.jpeg
+4
+Strengths
+1. Prisma ORM is excellent
+Prisma makes database work very simple.
+
+Example query:
+
+const incidents = await prisma.incident.findMany({
+  where: { severity: 4 }
+})
+This is very clean and type-safe.
+
+2. Database migrations are easier
+Prisma migrations are simple:
+
+npx prisma migrate dev
+Compared with Alembic complexity.
+
+3. TypeScript support
+With TypeScript you get strong typing.
+
+Example:
+
+type Incident = {
+  id: number
+  severity: number
+}
+Weaknesses
+1. Validation is manual
+Express does not provide validation by default.
+
+You must add libraries:
+
+zod
+
+joi
+
+express-validator
+
+Which adds complexity.
+
+2. API docs require extra setup
+Swagger must be configured manually.
+
+FastAPI gives this automatically.
+
+3. Architecture can become messy
+Without discipline Express projects easily become:
+
+routes -> controllers -> services -> utils -> helpers
+Which can confuse examiners.
+
+3. Which is Better for THIS Coursework?
+For your Hotel Booking Intelligence API, the better stack is:
+
+⭐ FastAPI + PostgreSQL + SQLAlchemy
+Because it gives you:
+
+1. Better viva explanations
+You can talk about:
+
+Pydantic validation
+
+OpenAPI schema generation
+
+typed request models
+
+dependency injection
+
+Those sound very strong academically.
+
+2. Automatic API documentation
+Examiners love seeing:
+
+/docs
+with all endpoints visible.
+
+3. Less boilerplate
+Validation + documentation + schema = built-in.
+
+4. Cleaner architecture
+Python projects often appear more structured.
+
+5. Easier analytics endpoints
+Python is better suited for data processing logic, which your API will use.
+
+Example:
+
+@router.get("/analytics/cancellation-rate")
+Final Verdict
+Category	FastAPI	Express + Prisma
+Architecture clarity	⭐⭐⭐⭐⭐	⭐⭐⭐
+Validation	⭐⭐⭐⭐⭐	⭐⭐⭐
+API docs	⭐⭐⭐⭐⭐	⭐⭐
+Testing	⭐⭐⭐⭐	⭐⭐⭐
+Viva explanation	⭐⭐⭐⭐⭐	⭐⭐⭐
+Database handling	⭐⭐⭐	⭐⭐⭐⭐⭐
+Winner: FastAPI
+
+Recommended Architecture Pattern
+Use a Layered Architecture (Clean API structure).
+
+This is easy to explain.
+
+Recommended Folder Structure
+app/
+│
+├── main.py
+│
+├── core/
+│   ├── config.py
+│   └── database.py
+│
+├── models/
+│   ├── booking.py
+│   ├── incident.py
+│
+├── schemas/
+│   ├── booking_schema.py
+│   ├── incident_schema.py
+│
+├── repositories/
+│   ├── booking_repository.py
+│   └── incident_repository.py
+│
+├── services/
+│   ├── booking_service.py
+│   ├── incident_service.py
+│   └── analytics_service.py
+│
+├── routers/
+│   ├── bookings_router.py
+│   ├── incidents_router.py
+│   └── analytics_router.py
+│
+└── tests/
+    ├── test_bookings.py
+    ├── test_incidents.py
+How Requests Flow
+Client Request
+      ↓
+Router
+      ↓
+Service Layer
+      ↓
+Repository Layer
+      ↓
+Database
+This separation makes your code:
+
+modular
+
+testable
+
+maintainable
+
+And easy to explain.
+
+Example Request Flow
+POST /incidents
+Flow:
+
+router → validate request
+service → business logic
+repository → database query
+model → SQLAlchemy table
+How to Describe It in Your Viva
+A good explanation:
+
+“The API follows a layered architecture separating routing, business logic, and persistence. FastAPI handles request validation through Pydantic schemas, and SQLAlchemy manages relational database interaction. This design improves modularity, testability, and maintainability.”
+
+That sentence alone sounds very professional.
+
+If you want, I can also show you
+The exact 6 tables you should implement
+
+The minimal SQL schema
+
+The 5 endpoints that impress examiners most
+
+for this Hotel Booking Intelligence API.
+
+
+Help me plan the last layer of this coursework project so it looks high quality in the oral exam. Give me a practical plan for testing, deployment, documentation, and commit structure for this API. Also tell me how I should explain the main design trade-offs in a 5-minute presentation, especially why I combined a historical dataset with user-generated CRUD data instead of building a simpler review API.
+
+Below is a practical “final layer” plan to make your Hotel Booking Intelligence API look polished in the oral exam. The goal is not to add huge complexity but to show engineering maturity: testing, deployment readiness, clear documentation, and thoughtful design decisions.
+
+1. Testing Plan (Small but High-Impact)
+Aim for 5–8 focused tests. Examiners don’t expect huge coverage, but they want to see that testing exists.
+
+What to test
+1️⃣ CRUD behaviour
+Test your main resource (incidents).
+
+Example test cases:
+
+Test	Purpose
+Create incident	Ensure POST works
+Fetch incident	Verify GET endpoint
+Update incident	Check PATCH logic
+Delete incident	Confirm record removed
+Example (pytest-style):
+
+def test_create_incident(client):
+    data = {
+        "booking_id": 4023,
+        "incident_type": "room_issue",
+        "severity": 3
+    }
+
+    response = client.post("/incidents", json=data)
+
+    assert response.status_code == 201
+    assert response.json()["incident_type"] == "room_issue"
+2️⃣ Validation
+Test invalid inputs.
+
+Example:
+
+def test_invalid_severity(client):
+    data = {
+        "booking_id": 4023,
+        "incident_type": "room_issue",
+        "severity": 10
+    }
+
+    response = client.post("/incidents", json=data)
+
+    assert response.status_code == 422
+Shows:
+
+validation logic works.
+
+3️⃣ Analytics endpoint
+Example:
+
+GET /analytics/cancellation-rate
+Test that response structure is correct.
+
+Example:
+
+assert "cancellation_rate" in response.json()
+Ideal testing coverage
+Just say in viva:
+
+“The project includes unit tests for CRUD operations, validation logic, and analytical endpoints.”
+
+That sounds strong already.
+
+2. Deployment Plan
+You don’t need a full production deployment. Just show deployment readiness.
+
+Option 1 (best for coursework)
+Use Docker + local run.
+
+Create:
+
+Dockerfile
+docker-compose.yml
+Example services:
+
+API container
+PostgreSQL container
+Then run:
+
+docker-compose up
+Explain in viva:
+
+“The system is containerised with Docker to ensure consistent environments across machines.”
+
+Option 2 (optional bonus)
+Deploy to:
+
+Render
+
+Railway
+
+Fly.io
+
+But this is optional.
+
+3. Documentation Plan
+Good documentation dramatically improves perceived quality.
+
+Include:
+
+README.md
+Structure:
+
+Project overview
+Architecture
+Installation
+Running the API
+API endpoints
+Testing
+Example:
+
+## Project Overview
+
+Hotel Booking Intelligence API built with FastAPI and PostgreSQL.
+
+The system combines historical booking data with operational incident reporting to generate analytical insights.
+API Documentation
+FastAPI automatically gives:
+
+/docs
+Show this during demo.
+
+You can say:
+
+“The API exposes an OpenAPI specification automatically generated by FastAPI.”
+
+ER Diagram
+Add a simple diagram to README.
+
+Example structure:
+
+Hotels
+   │
+Bookings
+   │
+Incidents
+   │
+Manager Notes
+Even a small diagram looks very professional.
+
+4. Commit Structure (Very Important)
+Your Git history should look intentional, not chaotic.
+
+Example commit timeline:
+
+Initial setup
+init: create FastAPI project structure
+Database
+feat: add PostgreSQL connection and SQLAlchemy models
+Dataset integration
+feat: import hotel booking dataset into bookings table
+CRUD
+feat: implement incident CRUD endpoints
+Validation
+feat: add Pydantic validation schemas for incidents
+Analytics
+feat: implement cancellation analytics endpoint
+Tests
+test: add CRUD and validation tests
+Documentation
+docs: add README and architecture explanation
+Final polish
+refactor: improve router/service separation
+This commit structure shows:
+
+incremental development
+
+good engineering practice
+
+5. What to Demo in the Oral Exam
+Keep the demo very short and structured.
+
+Step 1 — Show API docs
+Open:
+
+/docs
+Explain:
+
+“The API exposes REST endpoints documented via OpenAPI.”
+
+Step 2 — Show CRUD
+Create incident:
+
+POST /incidents
+Then fetch:
+
+GET /incidents
+Step 3 — Show analytics
+Example:
+
+GET /analytics/cancellation-rate
+Explain:
+
+“This endpoint calculates cancellation statistics from the historical booking dataset.”
+
+Step 4 — Show insight endpoint
+Example:
+
+GET /insights/high-risk-bookings
+Explain briefly.
+
+6. Explaining the Design Trade-Offs
+This is the most important part of the viva.
+
+Your key design decision:
+
+Combining historical dataset + user-generated data.
+
+The Problem With a Simple Review API
+Explain this first.
+
+A review API would:
+
+only store opinions
+
+have minimal connection to booking data
+
+provide limited analytical value
+
+Example:
+
+reviews
+rating
+comment
+This is too simplistic.
+
+Your Design
+Your API combines two data layers.
+
+Historical dataset
+Provides:
+
+booking behaviour
+
+cancellations
+
+demand patterns
+
+Example fields:
+
+lead_time
+market_segment
+adr
+reservation_status
+Operational CRUD data
+Allows live user input.
+
+Example:
+
+incidents
+manager_notes
+The Benefit
+Combining both enables intelligence-style endpoints.
+
+Example insights:
+
+high cancellation segments
+incident hotspots
+operational risk periods
+One-line explanation
+In the viva, say:
+
+“The dataset provides historical demand patterns, while the CRUD resources allow operational data to be recorded. Combining both layers enables analytical endpoints that would not be possible with either dataset alone.”
+
+That sentence is excellent academically.
+
+7. Key Design Trade-Offs You Can Mention
+Examiners love hearing trade-offs.
+
+Trade-off 1 — simplicity vs realism
+Simpler option:
+
+hotel review API
+Chosen design:
+
+booking intelligence API
+More realistic and analytically useful.
+
+Trade-off 2 — normalization vs speed
+You normalized fields like:
+
+market_segment
+deposit_type
+customer_type
+Benefit:
+
+relational integrity
+
+reduced redundancy
+
+Trade-off 3 — analytics vs CRUD simplicity
+You added analytical endpoints:
+
+/analytics
+/insights
+instead of only CRUD operations.
+
+8. Your 5-Minute Presentation Structure
+Use this exact structure.
+
+1️⃣ Problem (30 seconds)
+Hotels collect booking data but often lack tools to analyse operational issues linked to bookings.
+
+2️⃣ System (1 minute)
+Hotel Booking Intelligence API.
+
+Combines:
+
+historical booking dataset
+
+operational incident reporting
+
+3️⃣ Architecture (1 minute)
+Explain layers:
+
+router
+service
+repository
+database
+Mention:
+
+FastAPI
+
+PostgreSQL
+
+SQLAlchemy
+
+4️⃣ Key features (2 minutes)
+Show:
+
+CRUD incidents
+
+analytics endpoints
+
+insight endpoints
+
+5️⃣ Design decision (30 seconds)
+Explain:
+
+why dataset + CRUD is better than reviews.
+
+9. Final Impression You Want to Give
+Your project should look like:
+
+Operational Intelligence System
+
+NOT:
+
+Simple Hotel Review API
+
+That framing alone makes your project sound much stronger.
+
+If you want, I can also show you the 6 endpoints examiners love the most (the ones that make the API look genuinely “intelligent” even though they are only ~20 lines of code).
+
+
+I have now chosen my final project direction for COMP3011.
+
+Please help me produce a final locked specification for a REST API called “Hotel Risk & Operations Intelligence API”.
+
+Context:
+- Historical data comes from the Hotel Booking Demand dataset.
+- I want the system to combine imported booking data with user-generated operational data.
+- I want the design to be strong for a high-mark coursework submission, but still realistic to implement within one week.
+- I do not want a bloated system with too many tables or endpoints.
+
+Please give me a final recommended specification with these sections:
+1. Final project summary in 1 paragraph
+2. Core user roles
+3. Final database entities only (keep it lean)
+4. Entity relationships
+5. Main CRUD resource and supporting CRUD resource
+6. Final endpoint list for MVP only
+7. 2 stretch features only
+8. Why this scope is strong but manageable for a top-grade submission
+
+Important:
+- Keep the design lean and implementable
+- Prefer one main CRUD model and one supporting CRUD model
+- Prefer analytics and one insight endpoint over too many CRUD tables
+- Make the answer feel like a final decision, not more brainstorming
+
+Below is a final locked specification for your COMP3011 coursework project.
+
+The aim is a lean but high-quality system that shows:
+
+good relational design
+
+one strong CRUD model
+
+analytics based on the dataset
+
+one insight endpoint
+
+a clear architecture you can explain in the viva
+
+This scope is very achievable within one week but still looks like a serious backend system.
+
+Hotel Risk & Operations Intelligence API
+Final Project Specification
+
+1. Final Project Summary
+The Hotel Risk & Operations Intelligence API is a RESTful backend system that combines historical booking data from the Hotel Booking Demand dataset with user-generated operational data to support hotel risk monitoring and operational analysis. The historical dataset provides information about booking behaviour, cancellations, demand patterns, and customer segments, while the API allows staff to record operational incidents and internal manager notes linked to specific bookings. By combining these two layers of data, the system can expose analytical endpoints that reveal operational patterns such as cancellation trends, incident frequency, and high-risk bookings. This design transforms a static dataset into an operational intelligence system rather than a simple data viewer or review platform.
+
+2. Core User Roles
+The system assumes a simple internal staff usage model.
+
+Operations Staff
+Front-desk or operations employees who record issues related to bookings.
+
+Capabilities:
+
+create incident reports
+
+view incidents
+
+update incident status
+
+Hotel Managers
+Managers who monitor operations and attach internal context.
+
+Capabilities:
+
+view booking and analytics data
+
+add internal notes to bookings or incidents
+
+review operational patterns through analytics endpoints
+
+3. Final Database Entities (Lean Set)
+Only five core entities are required.
+
+1. Hotels
+Represents the hotel property.
+
+Key fields:
+
+hotel_id (PK)
+hotel_name
+2. Bookings (Imported Dataset)
+Represents historical booking records from the dataset.
+
+Important fields (subset of dataset):
+
+booking_id (PK)
+hotel_id (FK)
+
+arrival_year
+arrival_month
+
+lead_time
+market_segment
+distribution_channel
+
+adr
+
+is_canceled
+
+previous_cancellations
+previous_bookings_not_canceled
+This table is read-only in the API.
+
+3. Incidents (Main CRUD Resource)
+Operational issues recorded by staff.
+
+incident_id (PK)
+
+booking_id (FK)
+
+incident_type
+severity
+description
+
+status
+created_at
+Status examples:
+
+open
+investigating
+resolved
+4. ManagerNotes (Supporting CRUD Resource)
+Internal notes attached to bookings or incidents.
+
+note_id (PK)
+
+booking_id (FK)
+
+note_text
+created_at
+author
+5. (Optional but recommended) IncidentTypes
+Reference table for incident classification.
+
+incident_type_id (PK)
+type_name
+Examples:
+
+room_issue
+overbooking
+guest_complaint
+maintenance
+This helps show normalisation.
+
+4. Entity Relationships
+The data model intentionally keeps relationships simple.
+
+Hotels
+   │
+   │ 1
+   │
+Bookings
+   │
+   │ 1
+   │
+Incidents
+   │
+   │
+ManagerNotes
+Explanation:
+
+A hotel has many bookings.
+
+A booking may have multiple incidents.
+
+A booking may also have manager notes.
+
+Key relationships:
+
+bookings.hotel_id → hotels.hotel_id
+
+incidents.booking_id → bookings.booking_id
+
+manager_notes.booking_id → bookings.booking_id
+5. Main CRUD Resource + Supporting CRUD Resource
+Main CRUD Resource: Incidents
+Incidents represent operational problems tied to bookings.
+
+Examples:
+
+incorrect room assignment
+
+guest complaint
+
+overbooking
+
+maintenance issue
+
+CRUD operations:
+
+create incident
+view incidents
+update incident status
+delete incident
+Why this works well:
+
+realistic operational workflow
+
+strong connection to booking data
+
+allows severity validation
+
+useful for analytics
+
+Supporting CRUD Resource: Manager Notes
+Managers can attach internal notes to bookings.
+
+Example:
+
+"VIP guest — ensure late checkout"
+Purpose:
+
+adds context to operational data
+
+demonstrates relational design
+
+lightweight CRUD implementation
+
+6. Final Endpoint List (MVP Only)
+Keep endpoints minimal but meaningful.
+
+Dataset Endpoints
+Get hotels
+GET /hotels
+Returns list of hotels.
+
+Get bookings
+GET /bookings
+Supports filters:
+
+/bookings?hotel=City Hotel
+/bookings?arrival_month=July
+/bookings?market_segment=Online TA
+Get booking details
+GET /bookings/{id}
+Main CRUD: Incidents
+Create incident
+POST /incidents
+Get incidents
+GET /incidents
+Filters:
+
+/incidents?status=open
+/incidents?severity=4
+Get incident
+GET /incidents/{id}
+Update incident
+PATCH /incidents/{id}
+Example update:
+
+status → resolved
+Delete incident
+DELETE /incidents/{id}
+Supporting CRUD: Manager Notes
+Create note
+POST /notes
+Get notes
+GET /notes?booking_id=123
+Delete note
+DELETE /notes/{id}
+Analytics Endpoints
+These are essential for demonstrating intelligence features.
+
+Cancellation summary
+GET /analytics/cancellation-rate
+Returns:
+
+total bookings
+total cancellations
+cancellation rate
+Incidents by hotel
+GET /analytics/incidents-by-hotel
+Returns incident counts grouped by hotel.
+
+Insight Endpoint
+Only one insight endpoint is needed.
+
+High-risk bookings
+GET /insights/high-risk-bookings
+Logic example:
+
+High risk if:
+
+lead_time > threshold
+AND previous_cancellations > 0
+Response includes:
+
+booking_id
+risk_score
+reason
+7. Two Stretch Features Only
+Stretch features should be small but impressive.
+
+1. Incident Severity Dashboard Endpoint
+GET /analytics/incident-severity-distribution
+Shows breakdown of incidents by severity level.
+
+Good for demonstrating:
+
+SQL aggregation
+
+operational insight
+
+2. Booking Risk Score
+Enhance the insight endpoint.
+
+Calculate a simple score using:
+
+lead_time
+previous_cancellations
+deposit_type
+Example response:
+
+booking_id
+risk_score
+risk_level
+8. Why This Scope Is Strong but Manageable
+This design balances technical strength and practical scope.
+
+Lean data model
+Only 4–5 entities, which keeps implementation realistic.
+
+One main CRUD model
+Incidents provide a meaningful operational workflow.
+
+This is far stronger academically than a typical review system.
+
+Dataset + operational data integration
+The system combines:
+
+historical booking behaviour
++
+live operational reporting
+This allows insights that a simple review API cannot produce.
+
+Analytical endpoints
+Analytics demonstrates:
+
+SQL aggregation
+
+dataset understanding
+
+value beyond CRUD
+
+Insight endpoint
+The risk endpoint shows:
+
+business logic
+
+interpretation of dataset features
+
+Realistic workload
+Estimated implementation effort:
+
+database models → 2–3 hours
+CRUD endpoints → 3–4 hours
+analytics queries → 2 hours
+testing + documentation → 2 hours
+Total:
+
+≈ 1 week comfortably
+Final Framing for the Viva
+Your project should be described as:
+
+Operational Intelligence API for Hotel Booking Risk Monitoring
+
+Not:
+
+hotel review system
+This framing immediately makes the system sound:
+
+analytical
+
+operational
+
+data-driven
+
+which is exactly what markers expect from a high-quality backend coursework submission.
+
+
+
+

@@ -1,0 +1,2306 @@
+----------------------------------------------------------------------------------
+Conversation Link: https://chatgpt.com/share/69aadce2-4b54-8008-a226-e727b33e4094
+----------------------------------------------------------------------------------
+
+
+
+
+----------------------------------------------------------------------------------
+Raw Text (in case of broken link for some reason): 
+----------------------------------------------------------------------------------
+
+I'm building a Hotel Booking Intelligence API for my COMP3011 coursework using FastAPI + SQLAlchemy + SQLite. I've already designed the schema with 3 tables: bookings (imported from CSV), incidents (full CRUD), and manager_notes (CRUD). Can you help me set up the project structure? I want a layered architecture with separate routers, models, schemas, and services directories. Show me how to configure SQLAlchemy with SQLite and create a dependency injection function for database sessions in FastAPI.
+
+I’m going to sketch a clean FastAPI project layout, then give you the exact SQLAlchemy/SQLite setup and the session dependency you can drop in. After that I’ll show how the routers, schemas, models, and services fit together so the structure stays explainable in your viva.
+
+Thought for 13s
+Yes — a clean layered structure for your coursework would look like this:
+
+hotel_booking_intelligence_api/
+├─ app/
+│  ├─ main.py
+│  ├─ core/
+│  │  ├─ config.py
+│  │  └─ database.py
+│  ├─ models/
+│  │  ├─ __init__.py
+│  │  ├─ booking.py
+│  │  ├─ incident.py
+│  │  └─ manager_note.py
+│  ├─ schemas/
+│  │  ├─ __init__.py
+│  │  ├─ booking.py
+│  │  ├─ incident.py
+│  │  └─ manager_note.py
+│  ├─ services/
+│  │  ├─ booking_service.py
+│  │  ├─ incident_service.py
+│  │  └─ manager_note_service.py
+│  ├─ routers/
+│  │  ├─ booking_router.py
+│  │  ├─ incident_router.py
+│  │  └─ manager_note_router.py
+│  └─ db/
+│     └─ hotel.db
+├─ requirements.txt
+└─ run.py
+This is a sensible FastAPI + SQLAlchemy layout because it keeps the engine and session factory at module scope, separates ORM models from validation schemas, and lets routers stay thin while business logic lives in services. SQLAlchemy’s docs recommend creating the Engine once and keeping the sessionmaker in the same scope, and FastAPI commonly uses dependency injection for per-request database sessions. 
+
+1) Core database setup
+Use SQLAlchemy 2-style setup with SQLite.
+
+app/core/config.py
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+DB_PATH = BASE_DIR / "db" / "hotel.db"
+DATABASE_URL = f"sqlite:///{DB_PATH}"
+app/core/database.py
+from sqlalchemy import create_engine
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+
+from app.core.config import DATABASE_URL
+
+# Needed for SQLite when using FastAPI across requests/threads
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False}
+)
+
+SessionLocal = sessionmaker(
+    bind=engine,
+    autoflush=False,
+    autocommit=False,
+    expire_on_commit=False
+)
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+Why this works:
+
+create_engine() is the standard way to create the database engine. 
+
+sessionmaker() is the recommended factory for creating Session objects, usually in the same scope as the engine. 
+
+SQLite support is built into SQLAlchemy, and FastAPI projects commonly use check_same_thread=False so request handling does not trip over SQLite’s default thread restriction. SQLite is fully supported by SQLAlchemy. 
+
+2) Base model imports
+app/models/__init__.py
+from app.models.booking import Booking
+from app.models.incident import Incident
+from app.models.manager_note import ManagerNote
+This matters because when you call Base.metadata.create_all(...), SQLAlchemy only creates tables for models that have already been imported.
+
+3) Example ORM models
+app/models/booking.py
+from sqlalchemy import Integer, String, Float
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.core.database import Base
+
+
+class Booking(Base):
+    __tablename__ = "bookings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    hotel: Mapped[str] = mapped_column(String, nullable=False)
+    lead_time: Mapped[int] = mapped_column(Integer, nullable=False)
+    arrival_date_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    country: Mapped[str | None] = mapped_column(String, nullable=True)
+    adr: Mapped[float | None] = mapped_column(Float, nullable=True)
+    reservation_status: Mapped[str] = mapped_column(String, nullable=False)
+
+    incidents = relationship("Incident", back_populates="booking", cascade="all, delete-orphan")
+    manager_notes = relationship("ManagerNote", back_populates="booking", cascade="all, delete-orphan")
+app/models/incident.py
+from sqlalchemy import Integer, String, ForeignKey, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.core.database import Base
+
+
+class Incident(Base):
+    __tablename__ = "incidents"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    booking_id: Mapped[int] = mapped_column(ForeignKey("bookings.id"), nullable=False)
+    incident_type: Mapped[str] = mapped_column(String, nullable=False)
+    severity: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    booking = relationship("Booking", back_populates="incidents")
+app/models/manager_note.py
+from sqlalchemy import Integer, ForeignKey, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.core.database import Base
+
+
+class ManagerNote(Base):
+    __tablename__ = "manager_notes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    booking_id: Mapped[int] = mapped_column(ForeignKey("bookings.id"), nullable=False)
+    note_text: Mapped[str] = mapped_column(Text, nullable=False)
+
+    booking = relationship("Booking", back_populates="manager_notes")
+4) Pydantic schemas
+Keep schemas split into:
+
+create/update input
+
+response output
+
+app/schemas/incident.py
+from pydantic import BaseModel
+
+
+class IncidentBase(BaseModel):
+    incident_type: str
+    severity: str
+    description: str | None = None
+
+
+class IncidentCreate(IncidentBase):
+    booking_id: int
+
+
+class IncidentUpdate(BaseModel):
+    incident_type: str | None = None
+    severity: str | None = None
+    description: str | None = None
+
+
+class IncidentResponse(IncidentBase):
+    id: int
+    booking_id: int
+
+    model_config = {"from_attributes": True}
+app/schemas/manager_note.py
+from pydantic import BaseModel
+
+
+class ManagerNoteBase(BaseModel):
+    note_text: str
+
+
+class ManagerNoteCreate(ManagerNoteBase):
+    booking_id: int
+
+
+class ManagerNoteUpdate(BaseModel):
+    note_text: str | None = None
+
+
+class ManagerNoteResponse(ManagerNoteBase):
+    id: int
+    booking_id: int
+
+    model_config = {"from_attributes": True}
+app/schemas/booking.py
+from pydantic import BaseModel
+
+
+class BookingResponse(BaseModel):
+    id: int
+    hotel: str
+    lead_time: int
+    arrival_date_year: int
+    country: str | None = None
+    adr: float | None = None
+    reservation_status: str
+
+    model_config = {"from_attributes": True}
+5) Service layer
+Put query and CRUD logic here, not in routers.
+
+app/services/incident_service.py
+from sqlalchemy.orm import Session
+
+from app.models.incident import Incident
+from app.schemas.incident import IncidentCreate, IncidentUpdate
+
+
+def get_all_incidents(db: Session):
+    return db.query(Incident).all()
+
+
+def get_incident_by_id(db: Session, incident_id: int):
+    return db.query(Incident).filter(Incident.id == incident_id).first()
+
+
+def create_incident(db: Session, incident_data: IncidentCreate):
+    incident = Incident(**incident_data.model_dump())
+    db.add(incident)
+    db.commit()
+    db.refresh(incident)
+    return incident
+
+
+def update_incident(db: Session, incident: Incident, update_data: IncidentUpdate):
+    for field, value in update_data.model_dump(exclude_unset=True).items():
+        setattr(incident, field, value)
+
+    db.commit()
+    db.refresh(incident)
+    return incident
+
+
+def delete_incident(db: Session, incident: Incident):
+    db.delete(incident)
+    db.commit()
+app/services/manager_note_service.py
+from sqlalchemy.orm import Session
+
+from app.models.manager_note import ManagerNote
+from app.schemas.manager_note import ManagerNoteCreate, ManagerNoteUpdate
+
+
+def get_all_notes(db: Session):
+    return db.query(ManagerNote).all()
+
+
+def get_note_by_id(db: Session, note_id: int):
+    return db.query(ManagerNote).filter(ManagerNote.id == note_id).first()
+
+
+def create_note(db: Session, note_data: ManagerNoteCreate):
+    note = ManagerNote(**note_data.model_dump())
+    db.add(note)
+    db.commit()
+    db.refresh(note)
+    return note
+
+
+def update_note(db: Session, note: ManagerNote, update_data: ManagerNoteUpdate):
+    for field, value in update_data.model_dump(exclude_unset=True).items():
+        setattr(note, field, value)
+
+    db.commit()
+    db.refresh(note)
+    return note
+
+
+def delete_note(db: Session, note: ManagerNote):
+    db.delete(note)
+    db.commit()
+6) Router layer
+Routers should just:
+
+validate request
+
+call service
+
+return response
+
+app/routers/incident_router.py
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.schemas.incident import IncidentCreate, IncidentUpdate, IncidentResponse
+from app.services import incident_service
+
+router = APIRouter(prefix="/incidents", tags=["Incidents"])
+
+
+@router.get("/", response_model=list[IncidentResponse])
+def list_incidents(db: Session = Depends(get_db)):
+    return incident_service.get_all_incidents(db)
+
+
+@router.get("/{incident_id}", response_model=IncidentResponse)
+def get_incident(incident_id: int, db: Session = Depends(get_db)):
+    incident = incident_service.get_incident_by_id(db, incident_id)
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    return incident
+
+
+@router.post("/", response_model=IncidentResponse, status_code=201)
+def create_incident(payload: IncidentCreate, db: Session = Depends(get_db)):
+    return incident_service.create_incident(db, payload)
+
+
+@router.put("/{incident_id}", response_model=IncidentResponse)
+def update_incident(
+    incident_id: int,
+    payload: IncidentUpdate,
+    db: Session = Depends(get_db)
+):
+    incident = incident_service.get_incident_by_id(db, incident_id)
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+
+    return incident_service.update_incident(db, incident, payload)
+
+
+@router.delete("/{incident_id}", status_code=204)
+def delete_incident(incident_id: int, db: Session = Depends(get_db)):
+    incident = incident_service.get_incident_by_id(db, incident_id)
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+
+    incident_service.delete_incident(db, incident)
+    return None
+app/routers/manager_note_router.py
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.schemas.manager_note import (
+    ManagerNoteCreate,
+    ManagerNoteUpdate,
+    ManagerNoteResponse,
+)
+from app.services import manager_note_service
+
+router = APIRouter(prefix="/manager-notes", tags=["Manager Notes"])
+
+
+@router.get("/", response_model=list[ManagerNoteResponse])
+def list_notes(db: Session = Depends(get_db)):
+    return manager_note_service.get_all_notes(db)
+
+
+@router.get("/{note_id}", response_model=ManagerNoteResponse)
+def get_note(note_id: int, db: Session = Depends(get_db)):
+    note = manager_note_service.get_note_by_id(db, note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Manager note not found")
+    return note
+
+
+@router.post("/", response_model=ManagerNoteResponse, status_code=201)
+def create_note(payload: ManagerNoteCreate, db: Session = Depends(get_db)):
+    return manager_note_service.create_note(db, payload)
+
+
+@router.put("/{note_id}", response_model=ManagerNoteResponse)
+def update_note(note_id: int, payload: ManagerNoteUpdate, db: Session = Depends(get_db)):
+    note = manager_note_service.get_note_by_id(db, note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Manager note not found")
+
+    return manager_note_service.update_note(db, note, payload)
+
+
+@router.delete("/{note_id}", status_code=204)
+def delete_note(note_id: int, db: Session = Depends(get_db)):
+    note = manager_note_service.get_note_by_id(db, note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Manager note not found")
+
+    manager_note_service.delete_note(db, note)
+    return None
+app/routers/booking_router.py
+For imported bookings, you may keep this read-only:
+
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.models.booking import Booking
+from app.schemas.booking import BookingResponse
+
+router = APIRouter(prefix="/bookings", tags=["Bookings"])
+
+
+@router.get("/", response_model=list[BookingResponse])
+def list_bookings(db: Session = Depends(get_db)):
+    return db.query(Booking).limit(100).all()
+
+
+@router.get("/{booking_id}", response_model=BookingResponse)
+def get_booking(booking_id: int, db: Session = Depends(get_db)):
+    return db.query(Booking).filter(Booking.id == booking_id).first()
+7) Main FastAPI app
+app/main.py
+from fastapi import FastAPI
+
+from app.core.database import Base, engine
+from app.models import booking, incident, manager_note
+from app.routers.booking_router import router as booking_router
+from app.routers.incident_router import router as incident_router
+from app.routers.manager_note_router import router as manager_note_router
+
+app = FastAPI(title="Hotel Booking Intelligence API")
+
+Base.metadata.create_all(bind=engine)
+
+app.include_router(booking_router)
+app.include_router(incident_router)
+app.include_router(manager_note_router)
+
+
+@app.get("/")
+def root():
+    return {"message": "Hotel Booking Intelligence API is running"}
+8) Run file
+run.py
+import uvicorn
+
+if __name__ == "__main__":
+    uvicorn.run("app.main:app", reload=True)
+9) Requirements
+requirements.txt
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+If you want exact modern versions for reproducibility in coursework, pin them after testing locally. SQLAlchemy’s current docs emphasize the 2.x API style, so your setup above is aligned with the modern direction rather than older declarative_base()-heavy patterns. 
+
+10) Why this structure is good for COMP3011
+This gives you a strong viva story:
+
+routers = HTTP layer
+
+schemas = request/response validation
+
+models = database layer
+
+services = business logic
+
+core/database.py = infrastructure and dependency injection
+
+That separation makes your code easier to test, easier to extend, and much easier to justify architecturally than placing everything in one file. It also matches SQLAlchemy’s model of a shared engine/session factory with short-lived sessions per unit of work. 
+
+11) One small improvement I’d recommend
+For your coursework, keep:
+
+bookings as imported and mostly read-only
+
+incidents as the main CRUD resource
+
+manager_notes as the supporting CRUD resource
+
+That will make the architecture cleaner and keep your implementation manageable.
+
+I can turn this into a full starter codebase next, with all files written out exactly as copy-paste-ready.
+
+
+I have a CSV file with 119,390 hotel booking records from the Kaggle Hotel Booking Demand dataset. The CSV has columns like hotel, is_canceled, lead_time, arrival_date_month, country, market_segment, adr, etc. Some fields use the string "NULL" for missing values. Can you help me write an import script that reads this CSV and bulk-inserts it into my SQLAlchemy bookings table? I want batch inserts for performance.
+
+I’m checking the current SQLAlchemy guidance for efficient batch inserts, then I’ll give you a script tailored to your CSV import with "NULL" handling and SQLite.
+
+Thought for 10s
+Yes — for this dataset size, the cleanest approach is to read the CSV in chunks, normalize "NULL" to Python None, map each row into plain dictionaries, and then use Session.execute(insert(Booking), batch) for batched inserts. In SQLAlchemy 2.x, the modern bulk approach is Session.execute() with an Insert construct; older bulk helpers like bulk_insert_mappings() are now considered legacy. 
+
+Below is a practical import script you can drop into your project.
+
+Recommended file
+app/scripts/import_bookings.py
+
+import csv
+from pathlib import Path
+from typing import Any
+
+from sqlalchemy import insert, delete
+from sqlalchemy.orm import Session
+
+from app.core.database import SessionLocal, engine, Base
+from app.models.booking import Booking
+
+
+# Adjust this to match your real CSV file location
+CSV_PATH = Path("data/hotel_bookings.csv")
+
+# Tune this if needed
+BATCH_SIZE = 5000
+
+
+def nullify(value: str | None) -> str | None:
+    """
+    Convert CSV placeholders like 'NULL' or empty strings to Python None.
+    """
+    if value is None:
+        return None
+
+    value = value.strip()
+    if value == "" or value.upper() == "NULL":
+        return None
+
+    return value
+
+
+def to_int(value: str | None) -> int | None:
+    value = nullify(value)
+    return int(value) if value is not None else None
+
+
+def to_float(value: str | None) -> float | None:
+    value = nullify(value)
+    return float(value) if value is not None else None
+
+
+def to_bool_int(value: str | None) -> int | None:
+    """
+    Kaggle hotel dataset uses 0/1 for columns like is_canceled, is_repeated_guest.
+    Store as integers if your DB model uses Integer.
+    """
+    value = nullify(value)
+    return int(value) if value is not None else None
+
+
+def row_to_booking_dict(row: dict[str, str]) -> dict[str, Any]:
+    """
+    Map CSV columns to your Booking SQLAlchemy model fields.
+    Edit this carefully so it matches your actual Booking model.
+    """
+    return {
+        "hotel": nullify(row.get("hotel")),
+        "is_canceled": to_bool_int(row.get("is_canceled")),
+        "lead_time": to_int(row.get("lead_time")),
+        "arrival_date_year": to_int(row.get("arrival_date_year")),
+        "arrival_date_month": nullify(row.get("arrival_date_month")),
+        "arrival_date_week_number": to_int(row.get("arrival_date_week_number")),
+        "arrival_date_day_of_month": to_int(row.get("arrival_date_day_of_month")),
+        "stays_in_weekend_nights": to_int(row.get("stays_in_weekend_nights")),
+        "stays_in_week_nights": to_int(row.get("stays_in_week_nights")),
+        "adults": to_int(row.get("adults")),
+        "children": to_float(row.get("children")),  # often float-ish in CSVs with missing values
+        "babies": to_int(row.get("babies")),
+        "meal": nullify(row.get("meal")),
+        "country": nullify(row.get("country")),
+        "market_segment": nullify(row.get("market_segment")),
+        "distribution_channel": nullify(row.get("distribution_channel")),
+        "is_repeated_guest": to_bool_int(row.get("is_repeated_guest")),
+        "previous_cancellations": to_int(row.get("previous_cancellations")),
+        "previous_bookings_not_canceled": to_int(row.get("previous_bookings_not_canceled")),
+        "reserved_room_type": nullify(row.get("reserved_room_type")),
+        "assigned_room_type": nullify(row.get("assigned_room_type")),
+        "booking_changes": to_int(row.get("booking_changes")),
+        "deposit_type": nullify(row.get("deposit_type")),
+        "agent": nullify(row.get("agent")),
+        "company": nullify(row.get("company")),
+        "days_in_waiting_list": to_int(row.get("days_in_waiting_list")),
+        "customer_type": nullify(row.get("customer_type")),
+        "adr": to_float(row.get("adr")),
+        "required_car_parking_spaces": to_int(row.get("required_car_parking_spaces")),
+        "total_of_special_requests": to_int(row.get("total_of_special_requests")),
+        "reservation_status": nullify(row.get("reservation_status")),
+        "reservation_status_date": nullify(row.get("reservation_status_date")),
+    }
+
+
+def chunked_rows(csv_path: Path, batch_size: int):
+    """
+    Yield lists of mapped booking dictionaries in batches.
+    """
+    batch: list[dict[str, Any]] = []
+
+    with csv_path.open("r", encoding="utf-8-sig", newline="") as f:
+        reader = csv.DictReader(f)
+
+        for row in reader:
+            batch.append(row_to_booking_dict(row))
+
+            if len(batch) >= batch_size:
+                yield batch
+                batch = []
+
+        if batch:
+            yield batch
+
+
+def import_bookings(csv_path: Path, batch_size: int = BATCH_SIZE, clear_existing: bool = False):
+    """
+    Import bookings in batches using SQLAlchemy bulk INSERT.
+    """
+    Base.metadata.create_all(bind=engine)
+
+    total_inserted = 0
+
+    with SessionLocal() as db:
+        if clear_existing:
+            db.execute(delete(Booking))
+            db.commit()
+
+        for batch_number, batch in enumerate(chunked_rows(csv_path, batch_size), start=1):
+            db.execute(insert(Booking), batch)
+            db.commit()
+            total_inserted += len(batch)
+            print(f"Batch {batch_number}: inserted {len(batch)} rows (total: {total_inserted})")
+
+    print(f"Done. Imported {total_inserted} bookings.")
+
+
+if __name__ == "__main__":
+    import_bookings(CSV_PATH, batch_size=BATCH_SIZE, clear_existing=False)
+What your Booking model needs
+Your Booking model should contain columns matching the dictionary keys above. For example:
+
+from sqlalchemy import Integer, String, Float
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.core.database import Base
+
+
+class Booking(Base):
+    __tablename__ = "bookings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+
+    hotel: Mapped[str | None] = mapped_column(String, nullable=True)
+    is_canceled: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    lead_time: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    arrival_date_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    arrival_date_month: Mapped[str | None] = mapped_column(String, nullable=True)
+    arrival_date_week_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    arrival_date_day_of_month: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    stays_in_weekend_nights: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    stays_in_week_nights: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    adults: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    children: Mapped[float | None] = mapped_column(Float, nullable=True)
+    babies: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    meal: Mapped[str | None] = mapped_column(String, nullable=True)
+    country: Mapped[str | None] = mapped_column(String, nullable=True)
+    market_segment: Mapped[str | None] = mapped_column(String, nullable=True)
+    distribution_channel: Mapped[str | None] = mapped_column(String, nullable=True)
+    is_repeated_guest: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    previous_cancellations: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    previous_bookings_not_canceled: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    reserved_room_type: Mapped[str | None] = mapped_column(String, nullable=True)
+    assigned_room_type: Mapped[str | None] = mapped_column(String, nullable=True)
+    booking_changes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    deposit_type: Mapped[str | None] = mapped_column(String, nullable=True)
+    agent: Mapped[str | None] = mapped_column(String, nullable=True)
+    company: Mapped[str | None] = mapped_column(String, nullable=True)
+    days_in_waiting_list: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    customer_type: Mapped[str | None] = mapped_column(String, nullable=True)
+    adr: Mapped[float | None] = mapped_column(Float, nullable=True)
+    required_car_parking_spaces: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    total_of_special_requests: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    reservation_status: Mapped[str | None] = mapped_column(String, nullable=True)
+    reservation_status_date: Mapped[str | None] = mapped_column(String, nullable=True)
+Why this approach is the right one
+Session.execute(insert(Booking), batch) is the modern SQLAlchemy 2.x pattern for ORM bulk inserts, and SQLAlchemy documents batched multi-row insert behavior as the preferred modern route instead of legacy bulk helpers. 
+
+Useful notes for your dataset
+The Kaggle hotel dataset often contains missing-like values in fields such as children, country, agent, and company, so converting "NULL" and empty strings to None before insertion will prevent dirty string data leaking into nullable columns. That mapping step is also where you should normalize numeric fields like lead_time and adr into real Python int and float values before insert. This is an implementation recommendation based on your described CSV shape rather than a claim from external docs.
+
+How to run it
+From your project root:
+
+python -m app.scripts.import_bookings
+Or if you prefer:
+
+python app/scripts/import_bookings.py
+One improvement I strongly recommend
+Add indexes later on fields you’ll query in analytics, such as:
+
+hotel
+
+is_canceled
+
+arrival_date_year
+
+country
+
+market_segment
+
+That won’t change import logic, but it will help once you start building reporting endpoints.
+
+I can also give you a version that uses pandas for faster CSV cleaning, but for coursework, the pure csv version above is easier to explain in the viva.
+
+
+For my hotel booking API, I want to create an intelligent endpoint that identifies bookings with high cancellation risk. I'm thinking of a rule-based scoring heuristic that considers factors like lead time, previous cancellations, deposit type, market segment, whether the guest is a repeat customer, and booking changes. Can you help me design this scoring algorithm? What weights would make sense based on typical hotel booking patterns?
+
+I’m pulling together a grounded scoring heuristic using factors that are actually associated with cancellations in hotel booking data, then I’ll turn that into a simple rule-based formula you can justify in coursework.
+
+Thought for 31s
+Yes — for a COMP3011 API, a rule-based cancellation risk score is a very good choice because it is explainable, easy to implement, and easy to defend in a viva. A sensible design is to score each booking from 0 to 100 using a small number of weighted signals, then classify it as low, medium, or high risk. That fits your brief well because the hotel-booking dataset is widely used for cancellation prediction, and prior work on this dataset shows that variables like lead time, previous cancellations, deposit type, and some booking-behaviour features are important predictors of cancellation. 
+
+Recommended design
+Use this idea:
+
+risk_score = sum of weighted feature points, capped at 100
+
+Then map the score:
+
+0–29 = Low risk
+
+30–59 = Medium risk
+
+60–100 = High risk
+
+That gives you a simple endpoint such as:
+
+GET /bookings/{booking_id}/cancellation-risk
+
+returning:
+
+score
+
+band
+
+contributing factors
+
+optional explanation text
+
+Why these factors belong in the score
+On this dataset, explainability work found that previous cancellations and deposit type were among the most important features, and that bookings with more days between reservation and arrival were more likely to be canceled. The same analysis also found that more personalized bookings, such as those with parking spaces or special requests, tended to have lower cancellation probability. 
+
+The dataset itself includes the fields you mentioned — including lead_time, previous_cancellations, booking_changes, deposit_type, market_segment, and is_repeated_guest — so your heuristic can be justified as an interpretable approximation built directly on available booking attributes. 
+
+Suggested weights
+I’d use a 100-point model with these maximum contributions:
+
+Lead time: up to 25
+
+Previous cancellations: up to 25
+
+Deposit type: up to 20
+
+Market segment: up to 10
+
+Repeat guest status: up to 10
+
+Booking changes: up to 10
+
+That weighting makes sense because the strongest signals in the literature and explainability outputs are lead time, prior cancellation behaviour, and deposit-related behaviour, so they should dominate the score. Market segment, repeat-guest status, and booking changes still matter, but they are better treated as secondary modifiers rather than the main drivers. 
+
+Concrete scoring rules
+Here is a clean version you can implement.
+
+1) Lead time: max 25
+Longer lead time usually means more opportunity for plans to change, and explainability results on this dataset explicitly show that more days between booking and arrival increases cancellation probability. 
+
+Use:
+
+lead_time <= 7 → 0
+
+8–30 → 5
+
+31–90 → 12
+
+91–180 → 18
+
+181+ → 25
+
+2) Previous cancellations: max 25
+Prior cancellation history is one of the clearest and most intuitive risk signals in this dataset. The XAI analysis explicitly states that clients who canceled reservations in the past are more likely to cancel again. 
+
+Use:
+
+0 previous cancellations → 0
+
+1 → 12
+
+2 → 18
+
+3+ → 25
+
+3) Deposit type: max 20
+The dataset defines three categories: No Deposit, Non Refund, and Refundable. In the explainability analysis, customers with a refundable option were more likely to cancel than others, which makes sense because cancellation carries less penalty. 
+
+Use:
+
+Non Refund → 0
+
+No Deposit → 10
+
+Refundable → 20
+
+This is a strong feature because deposit structure directly affects the cost of canceling.
+
+4) Market segment: max 10
+This one should be lighter-weight because segment effects are useful, but more context-dependent. Analyses of this dataset commonly find higher cancellation rates in online travel agent / TA-TO type channels or segments, while direct and corporate business tends to be more stable. 
+
+A practical scoring scheme:
+
+Corporate → 0
+
+Direct → 2
+
+Offline TA/TO → 6
+
+Online TA or TA/TO → 8
+
+Groups → 10
+
+anything else / unknown → 4
+
+For viva purposes, describe this as a soft adjustment, not your core predictor.
+
+5) Repeat guest: max 10
+Repeat customers are usually lower-risk than one-off customers. In the dataset’s explainability work, repeated-guest behaviour is important enough to be modeled separately, and intuitively repeat guests have more trust, familiarity, and intent to actually stay. 
+
+Use:
+
+is_repeated_guest = 1 → 0
+
+is_repeated_guest = 0 → 10
+
+If you also store previous_bookings_not_canceled, you could make this slightly smarter later.
+
+6) Booking changes: max 10
+This one can be interpreted two ways, so I would keep it moderate. A change may indicate uncertainty, but it can also indicate continued engagement with the booking. Since you want a simple rule-based heuristic, treat a small number of changes as a mild signal and many changes as stronger instability. This is more of a practical design choice than a strongly established conclusion from the sources. The sources support that booking-behaviour variables matter, but the exact weight here is best treated as your coursework heuristic. 
+
+Use:
+
+0 changes → 0
+
+1 → 3
+
+2 → 6
+
+3+ → 10
+
+Final heuristic in one formula
+score = (
+    lead_time_points
+    + previous_cancellations_points
+    + deposit_type_points
+    + market_segment_points
+    + repeat_guest_points
+    + booking_changes_points
+)
+
+score = min(score, 100)
+My recommended version
+If you want the cleanest first version, I’d lock it as:
+
+def cancellation_risk_score(booking) -> tuple[int, str, list[str]]:
+    score = 0
+    reasons = []
+
+    # Lead time
+    if booking.lead_time is not None:
+        if booking.lead_time <= 7:
+            points = 0
+        elif booking.lead_time <= 30:
+            points = 5
+        elif booking.lead_time <= 90:
+            points = 12
+        elif booking.lead_time <= 180:
+            points = 18
+        else:
+            points = 25
+        score += points
+        if points:
+            reasons.append(f"Long lead time (+{points})")
+
+    # Previous cancellations
+    prev = booking.previous_cancellations or 0
+    if prev == 0:
+        points = 0
+    elif prev == 1:
+        points = 12
+    elif prev == 2:
+        points = 18
+    else:
+        points = 25
+    score += points
+    if points:
+        reasons.append(f"Previous cancellations history (+{points})")
+
+    # Deposit type
+    deposit = (booking.deposit_type or "").strip().lower()
+    if deposit == "non refund":
+        points = 0
+    elif deposit == "no deposit":
+        points = 10
+    elif deposit == "refundable":
+        points = 20
+    else:
+        points = 8
+    score += points
+    if points:
+        reasons.append(f"Deposit type risk (+{points})")
+
+    # Market segment
+    segment = (booking.market_segment or "").strip().lower()
+    if segment == "corporate":
+        points = 0
+    elif segment == "direct":
+        points = 2
+    elif segment in {"offline ta/to"}:
+        points = 6
+    elif segment in {"online ta", "ta/to"}:
+        points = 8
+    elif segment == "groups":
+        points = 10
+    else:
+        points = 4
+    score += points
+    if points:
+        reasons.append(f"Market segment pattern (+{points})")
+
+    # Repeat guest
+    repeated = booking.is_repeated_guest or 0
+    points = 0 if repeated == 1 else 10
+    score += points
+    if points:
+        reasons.append(f"Not a repeat guest (+{points})")
+
+    # Booking changes
+    changes = booking.booking_changes or 0
+    if changes == 0:
+        points = 0
+    elif changes == 1:
+        points = 3
+    elif changes == 2:
+        points = 6
+    else:
+        points = 10
+    score += points
+    if points:
+        reasons.append(f"Multiple booking changes (+{points})")
+
+    score = min(score, 100)
+
+    if score >= 60:
+        band = "high"
+    elif score >= 30:
+        band = "medium"
+    else:
+        band = "low"
+
+    return score, band, reasons
+Example interpretation
+A booking with:
+
+lead_time = 210
+
+previous_cancellations = 2
+
+deposit_type = "Refundable"
+
+market_segment = "Online TA"
+
+is_repeated_guest = 0
+
+booking_changes = 1
+
+would score:
+
+Lead time: 25
+
+Previous cancellations: 18
+
+Deposit type: 20
+
+Market segment: 8
+
+Repeat guest: 10
+
+Booking changes: 3
+
+Total = 84 → High risk
+
+That is exactly the kind of output that looks intelligent in an API demo while still being easy to explain.
+
+How to justify it in your report or viva
+You can say:
+
+“The endpoint uses an interpretable rule-based heuristic rather than a black-box ML model. The weights were chosen to reflect patterns repeatedly observed in hotel-booking cancellation studies and explainability analyses on the Hotel Booking Demand dataset, where prior cancellations, deposit conditions, and long lead times are among the strongest signals. Secondary modifiers such as market segment, repeat-guest status, and booking changes are included to improve business usefulness while keeping the scoring transparent.” 
+
+One thing I’d do to make it look stronger
+Store not just the score, but also the top contributing reasons in the response. For example:
+
+{
+  "booking_id": 12345,
+  "cancellation_risk_score": 84,
+  "risk_band": "high",
+  "top_factors": [
+    "Long lead time",
+    "Refundable deposit",
+    "Previous cancellations history"
+  ]
+}
+That makes the endpoint feel genuinely “intelligent” rather than just numeric.
+
+I can turn this into a FastAPI service function and endpoint next.
+
+
+I need to write pytest tests for my FastAPI hotel booking API. I have endpoints for: booking listing with filters, incident CRUD (POST, GET, PUT, PATCH, DELETE), manager notes CRUD, analytics (cancellation rates, monthly demand), and insights (risk scoring). How should I structure my test suite? I want to use an in-memory test database separate from production. Show me how to set up test fixtures with sample data.
+
+I’m checking the current FastAPI and SQLAlchemy testing patterns so the structure I give you matches modern practice, especially for dependency overrides and isolated test databases.
+
+Thought for 32s
+A solid test suite for your API should mirror the app by feature, keep shared fixtures in tests/conftest.py, and override FastAPI’s get_db dependency so every test uses an isolated test database instead of production. FastAPI’s documented testing pattern is to use TestClient and app.dependency_overrides, and pytest recommends conftest.py for fixtures shared across many test files. 
+
+Recommended test layout
+tests/
+├── conftest.py
+├── test_bookings.py
+├── test_incidents.py
+├── test_manager_notes.py
+├── test_analytics.py
+└── test_insights.py
+This keeps tests grouped by endpoint domain rather than by HTTP verb, which makes failures easier to read and maintain. Shared fixtures in conftest.py are automatically discovered by pytest and can be used without imports. 
+
+What to test in each file
+test_bookings.py
+Focus on:
+
+list all bookings
+
+filter by hotel
+
+filter by country
+
+filter by market segment
+
+combine filters
+
+empty result set
+
+invalid filter values if you validate them
+
+test_incidents.py
+Focus on full CRUD:
+
+create incident
+
+get single incident
+
+list incidents
+
+put update
+
+patch partial update
+
+delete
+
+404 on missing incident
+
+test_manager_notes.py
+Same pattern as incidents:
+
+create
+
+list
+
+get one
+
+update
+
+patch
+
+delete
+
+404 cases
+
+test_analytics.py
+Focus on deterministic expected outputs:
+
+cancellation rate overall
+
+cancellation rate by hotel
+
+monthly demand counts
+
+empty dataset edge case if relevant
+
+test_insights.py
+Focus on the risk-scoring endpoint:
+
+low-risk booking returns low band
+
+high-risk booking returns high band
+
+response includes score and explanation factors
+
+missing booking returns 404
+
+1) Test database setup
+For SQLite tests, use a separate in-memory database and override your production get_db dependency. FastAPI officially supports this via app.dependency_overrides. For SQLite in-memory usage across test requests, SQLAlchemy documents that connection/pooling behavior matters; using a single shared connection via StaticPool is the common safe pattern when you want the same in-memory DB to persist across sessions in a test run. 
+
+tests/conftest.py
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
+from app.main import app
+from app.core.database import Base, get_db
+from app.models.booking import Booking
+from app.models.incident import Incident
+from app.models.manager_note import ManagerNote
+
+# In-memory SQLite test database
+SQLALCHEMY_DATABASE_URL = "sqlite://"
+
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,  # keeps the same in-memory DB for all sessions in tests
+)
+
+TestingSessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine,
+    expire_on_commit=False,
+)
+
+
+def override_get_db():
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def create_test_database():
+    Base.metadata.create_all(bind=engine)
+    yield
+    Base.metadata.drop_all(bind=engine)
+
+
+@pytest.fixture()
+def db_session():
+    # clean tables before each test so tests stay isolated
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@pytest.fixture()
+def client(db_session):
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(app) as test_client:
+        yield test_client
+    app.dependency_overrides.clear()
+Why this setup works
+FastAPI’s docs show that test dependencies should be swapped using app.dependency_overrides, with the original dependency as the key and the test replacement as the value. FastAPI also documents TestClient as the standard way to test request/response behavior. SQLAlchemy’s SQLite docs explain that in-memory SQLite has special pooling behavior, and a single shared connection pattern is important when multiple sessions need to see the same temporary database state. 
+
+2) Sample data fixtures
+Create fixtures that insert a small but meaningful set of bookings, incidents, and notes.
+
+@pytest.fixture()
+def sample_bookings(db_session):
+    bookings = [
+        Booking(
+            id=1,
+            hotel="Resort Hotel",
+            is_canceled=1,
+            lead_time=150,
+            arrival_date_year=2017,
+            arrival_date_month="July",
+            country="PRT",
+            market_segment="Online TA",
+            deposit_type="No Deposit",
+            is_repeated_guest=0,
+            previous_cancellations=2,
+            booking_changes=0,
+            adr=120.0,
+            reservation_status="Canceled",
+        ),
+        Booking(
+            id=2,
+            hotel="City Hotel",
+            is_canceled=0,
+            lead_time=12,
+            arrival_date_year=2017,
+            arrival_date_month="August",
+            country="GBR",
+            market_segment="Direct",
+            deposit_type="Non Refund",
+            is_repeated_guest=1,
+            previous_cancellations=0,
+            booking_changes=1,
+            adr=90.0,
+            reservation_status="Check-Out",
+        ),
+        Booking(
+            id=3,
+            hotel="City Hotel",
+            is_canceled=1,
+            lead_time=80,
+            arrival_date_year=2017,
+            arrival_date_month="August",
+            country="FRA",
+            market_segment="Groups",
+            deposit_type="Refundable",
+            is_repeated_guest=0,
+            previous_cancellations=1,
+            booking_changes=2,
+            adr=150.0,
+            reservation_status="Canceled",
+        ),
+    ]
+    db_session.add_all(bookings)
+    db_session.commit()
+    return bookings
+
+
+@pytest.fixture()
+def sample_incidents(db_session, sample_bookings):
+    incidents = [
+        Incident(
+            id=1,
+            booking_id=1,
+            incident_type="Overbooking",
+            severity="high",
+            description="Guest relocated due to capacity issue",
+        ),
+        Incident(
+            id=2,
+            booking_id=2,
+            incident_type="Payment issue",
+            severity="medium",
+            description="Card verification failed initially",
+        ),
+    ]
+    db_session.add_all(incidents)
+    db_session.commit()
+    return incidents
+
+
+@pytest.fixture()
+def sample_manager_notes(db_session, sample_bookings):
+    notes = [
+        ManagerNote(
+            id=1,
+            booking_id=1,
+            note_text="Monitor similar high-risk bookings this week.",
+        ),
+        ManagerNote(
+            id=2,
+            booking_id=2,
+            note_text="VIP repeat guest, low operational concern.",
+        ),
+    ]
+    db_session.add_all(notes)
+    db_session.commit()
+    return notes
+Keep the sample data tiny and intentional. That makes expected analytics outputs easy to calculate by hand, which is exactly what you want in API tests.
+
+3) Example endpoint tests
+tests/test_bookings.py
+def test_list_bookings(client, sample_bookings):
+    response = client.get("/bookings")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 3
+
+
+def test_filter_bookings_by_hotel(client, sample_bookings):
+    response = client.get("/bookings?hotel=City Hotel")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+    assert all(item["hotel"] == "City Hotel" for item in data)
+
+
+def test_filter_bookings_by_country(client, sample_bookings):
+    response = client.get("/bookings?country=PRT")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["country"] == "PRT"
+tests/test_incidents.py
+def test_create_incident(client, sample_bookings):
+    payload = {
+        "booking_id": 1,
+        "incident_type": "Noise complaint",
+        "severity": "low",
+        "description": "Minor complaint resolved at reception"
+    }
+
+    response = client.post("/incidents", json=payload)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["booking_id"] == 1
+    assert data["incident_type"] == "Noise complaint"
+
+
+def test_get_incident(client, sample_incidents):
+    response = client.get("/incidents/1")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == 1
+    assert data["severity"] == "high"
+
+
+def test_put_update_incident(client, sample_incidents):
+    payload = {
+        "booking_id": 1,
+        "incident_type": "Overbooking",
+        "severity": "critical",
+        "description": "Escalated to senior manager"
+    }
+
+    response = client.put("/incidents/1", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["severity"] == "critical"
+
+
+def test_patch_incident(client, sample_incidents):
+    payload = {
+        "severity": "low"
+    }
+
+    response = client.patch("/incidents/2", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["severity"] == "low"
+
+
+def test_delete_incident(client, sample_incidents):
+    response = client.delete("/incidents/1")
+    assert response.status_code == 204
+
+    follow_up = client.get("/incidents/1")
+    assert follow_up.status_code == 404
+tests/test_manager_notes.py
+def test_create_manager_note(client, sample_bookings):
+    payload = {
+        "booking_id": 3,
+        "note_text": "High cancellation probability based on booking profile."
+    }
+
+    response = client.post("/manager-notes", json=payload)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["booking_id"] == 3
+
+
+def test_patch_manager_note(client, sample_manager_notes):
+    response = client.patch("/manager-notes/1", json={"note_text": "Updated note"})
+    assert response.status_code == 200
+    assert response.json()["note_text"] == "Updated note"
+
+
+def test_delete_manager_note(client, sample_manager_notes):
+    response = client.delete("/manager-notes/2")
+    assert response.status_code == 204
+4) Analytics test examples
+The key with analytics is to seed known numbers and assert exact calculations.
+
+tests/test_analytics.py
+def test_cancellation_rate(client, sample_bookings):
+    response = client.get("/analytics/cancellation-rate")
+    assert response.status_code == 200
+
+    data = response.json()
+    # 2 canceled out of 3 total = 66.67%
+    assert data["total_bookings"] == 3
+    assert data["canceled_bookings"] == 2
+    assert round(data["cancellation_rate"], 2) == 66.67
+
+
+def test_monthly_demand(client, sample_bookings):
+    response = client.get("/analytics/monthly-demand")
+    assert response.status_code == 200
+
+    data = response.json()
+    # Depending on your response shape; adjust assertions to your API
+    months = {item["month"]: item["booking_count"] for item in data}
+    assert months["July"] == 1
+    assert months["August"] == 2
+If your analytics are grouped by hotel or year, create fixtures that make those splits obvious.
+
+5) Insights / risk-scoring test examples
+tests/test_insights.py
+def test_high_risk_booking(client, sample_bookings):
+    response = client.get("/insights/cancellation-risk/1")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["booking_id"] == 1
+    assert data["risk_band"] in {"medium", "high"}
+    assert data["risk_score"] >= 60
+
+
+def test_low_risk_booking(client, sample_bookings):
+    response = client.get("/insights/cancellation-risk/2")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["booking_id"] == 2
+    assert data["risk_band"] == "low"
+
+
+def test_missing_booking_for_risk_endpoint(client):
+    response = client.get("/insights/cancellation-risk/999")
+    assert response.status_code == 404
+This kind of test is especially good for coursework because it proves your “intelligent” endpoint behaves deterministically against known booking profiles.
+
+6) A small improvement: separate fixture layers
+A neat structure is:
+
+db_session fixture: gives a clean database session
+
+client fixture: gives FastAPI test client with dependency override
+
+sample_* fixtures: seed data only when a test asks for it
+
+That matches pytest’s fixture model, where tests explicitly request the fixtures they need by function arguments. 
+
+7) Suggested pytest.ini
+[pytest]
+testpaths = tests
+python_files = test_*.py
+8) Suggested packages
+Install:
+
+pip install pytest httpx
+FastAPI’s testing docs note that TestClient is used for tests and relies on the HTTPX-based testing stack. 
+
+9) Best-practice advice for your coursework
+Aim for three layers of confidence:
+
+router tests through TestClient for full endpoint behavior
+
+service tests later if you want extra depth
+
+edge-case tests for 404s, empty results, and bad payloads
+
+For COMP3011, endpoint-level tests are usually the most valuable because they demonstrate the whole API stack working together: routing, validation, dependency injection, ORM, and response serialization.
+
+The cleanest minimum suite would be:
+
+3 booking tests
+
+6 incident tests
+
+4 manager note tests
+
+2 analytics tests
+
+3 insight tests
+
+That already looks strong.
+
+I can also draft a full conftest.py and all five test files in one copy-paste-ready block tailored to your exact route names.
+
+
+What are the best practices for error handling in a FastAPI REST API? I want to make sure I'm using the correct HTTP status codes (201 for creation, 404 for not found, 422 for validation errors). Should I create custom exception handlers? How do I make sure my error responses are consistent and informative?
+
+I’m checking the current FastAPI and Starlette docs so I can give you a clean set of practices that matches how the framework handles validation and custom exceptions today.
+
+Thought for 10s
+Yes — the best pattern in FastAPI is:
+
+use the right HTTP status codes
+
+raise HTTPException for expected API errors
+
+add custom exception handlers for a consistent error shape
+
+keep one shared error response schema across the whole API
+
+let FastAPI handle request validation, but optionally reformat its default 422 output if you want a cleaner contract. FastAPI has built-in handlers for HTTPException and request validation errors, and it lets you override them with @app.exception_handler(...). 
+
+Recommended status codes
+For a REST API like your hotel booking system, these are the main ones to use:
+
+200 OK for successful reads and updates that return content.
+
+201 Created for successful creation. FastAPI supports setting this directly on the route with status_code=.... 
+
+204 No Content for successful deletes when you return no body.
+
+400 Bad Request for malformed business requests that are syntactically valid JSON but logically invalid for your domain.
+
+404 Not Found when a booking, incident, or note does not exist.
+
+409 Conflict when the request conflicts with current state, such as trying to create a duplicate unique resource.
+
+422 Unprocessable Content for request validation errors. FastAPI returns this automatically when request data fails validation. 
+
+500 Internal Server Error for unexpected server-side failures; Starlette includes server error handling middleware by default. 
+
+For your examples:
+
+POST /incidents → 201
+
+GET /incidents/999 → 404
+
+invalid request body → 422
+
+DELETE /manager-notes/5 → 204
+
+When to use HTTPException
+Use HTTPException for expected application-level failures, like “booking not found” or “incident cannot be created because booking_id is invalid.” FastAPI’s documented error-handling flow is built around raising HTTPException, and FastAPI provides a default JSON response for it. 
+
+Example:
+
+from fastapi import HTTPException, status
+
+def get_booking_or_404(db, booking_id: int):
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Booking {booking_id} not found"
+        )
+    return booking
+Using status.HTTP_404_NOT_FOUND rather than raw integers is a good habit because FastAPI exposes named status constants from Starlette. 
+
+Should you create custom exception handlers?
+Yes — for a coursework API, I would. Not because FastAPI’s defaults are bad, but because a custom handler gives you:
+
+one consistent JSON structure
+
+cleaner messages for clients
+
+a more professional API contract
+
+easier testing
+
+FastAPI explicitly supports overriding the default handlers for HTTPException and request validation errors. 
+
+A very good pattern is:
+
+keep HTTPException for simple route/service errors
+
+define one or two domain exceptions for business rules
+
+register handlers that convert everything into one standard response shape
+
+A clean error response format
+Use one schema like this everywhere:
+
+{
+  "error": {
+    "code": "BOOKING_NOT_FOUND",
+    "message": "Booking 123 was not found",
+    "details": null
+  }
+}
+That is not a FastAPI requirement — it is a design recommendation — but it is a strong practice because clients can always rely on the same top-level structure.
+
+For validation errors, you might return:
+
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Request validation failed",
+    "details": [
+      {
+        "field": "booking_id",
+        "message": "Field required"
+      }
+    ]
+  }
+}
+Recommended implementation
+1) Define custom exception classes
+class ApiException(Exception):
+    def __init__(self, status_code: int, code: str, message: str, details=None):
+        self.status_code = status_code
+        self.code = code
+        self.message = message
+        self.details = details
+
+
+class ResourceNotFound(ApiException):
+    def __init__(self, resource: str, resource_id: int | str):
+        super().__init__(
+            status_code=404,
+            code=f"{resource.upper()}_NOT_FOUND",
+            message=f"{resource.title()} {resource_id} was not found"
+        )
+
+
+class ConflictError(ApiException):
+    def __init__(self, code: str, message: str, details=None):
+        super().__init__(409, code, message, details)
+2) Register exception handlers
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+app = FastAPI()
+
+
+@app.exception_handler(ApiException)
+async def api_exception_handler(request: Request, exc: ApiException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": {
+                "code": exc.code,
+                "message": exc.message,
+                "details": exc.details,
+            }
+        },
+    )
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": {
+                "code": "HTTP_ERROR",
+                "message": str(exc.detail),
+                "details": None,
+            }
+        },
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    formatted = []
+    for err in exc.errors():
+        formatted.append({
+            "field": ".".join(str(x) for x in err["loc"]),
+            "message": err["msg"],
+            "type": err["type"],
+        })
+
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "Request validation failed",
+                "details": formatted,
+            }
+        },
+    )
+FastAPI documents overriding handlers for HTTPException and RequestValidationError, and returning your own JSONResponse from those handlers. 
+
+How to keep responses consistent
+The easiest way is to standardize on these rules:
+
+every success response uses your normal response models
+
+every error response uses the same top-level error object
+
+every error includes:
+
+a machine-readable code
+
+a human-readable message
+
+optional details
+
+That consistency matters more than making the payload fancy.
+
+For example:
+
+not found:
+
+{
+  "error": {
+    "code": "INCIDENT_NOT_FOUND",
+    "message": "Incident 99 was not found",
+    "details": null
+  }
+}
+validation:
+
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Request validation failed",
+    "details": [
+      {
+        "field": "body.severity",
+        "message": "Field required",
+        "type": "missing"
+      }
+    ]
+  }
+}
+Good practical rules for your API
+For your hotel booking API, I’d follow these:
+
+Bookings
+invalid filter type → 422 if FastAPI/Pydantic catches it
+
+booking not found → 404
+
+Incidents / Manager notes
+create success → 201
+
+get missing resource → 404
+
+update missing resource → 404
+
+delete success → 204
+
+invalid body → 422
+
+Analytics / Insights
+missing booking for risk score → 404
+
+impossible calculation because of no data:
+
+either return 200 with zeros if that makes business sense
+
+or 404/400 if the endpoint truly requires data
+Pick one rule and keep it consistent.
+
+One subtle but important point
+Do not use exceptions for normal control flow everywhere. Use them for actual error cases. For example:
+
+“booking not found” → exception is fine
+
+“no rows matched an optional filter” → probably just return [] with 200
+
+That makes your API feel cleaner.
+
+Document error responses too
+FastAPI lets you document additional responses for a route. That helps Swagger/OpenAPI show your 404 or 409 payloads clearly. FastAPI documents additional responses in path operations. 
+
+Example:
+
+from fastapi import APIRouter, status
+
+@router.get(
+    "/bookings/{booking_id}",
+    responses={
+        404: {
+            "description": "Booking not found"
+        }
+    }
+)
+def get_booking(booking_id: int):
+    ...
+My recommendation for your coursework
+Use this setup:
+
+HTTPException for simple 404-style route errors
+
+one base custom exception for business/domain errors
+
+one handler for domain errors
+
+one handler for validation errors
+
+one shared JSON error envelope
+
+That is simple, professional, and very defendable in a viva.
+
+A strong one-line explanation would be:
+
+“I used FastAPI’s built-in exception system for standard HTTP errors, and custom exception handlers to normalize all API errors into a consistent contract with machine-readable codes and human-readable messages.” 
+
+I can also give you a plug-in-ready exceptions.py and handlers.py structure for your layered project.
+
+
+I need to write a 5-page technical report for my COMP3011 coursework. The report should cover: my design and architectural choices, justification of the technology stack (FastAPI, SQLAlchemy, SQLite), challenges faced and lessons learned, limitations and future improvements, and a Generative AI declaration. Can you suggest a good structure and what to include in each section? The module values creativity, independence, and reflective learning.
+
+Thought for a couple of seconds
+Yes — for a 5-page COMP3011 technical report, I’d structure it so it reads like a clear engineering reflection, not just a feature summary.
+
+Because the module values creativity, independence, and reflective learning, your report should do three things throughout:
+
+show that your choices were intentional
+
+show that you made trade-offs, not just default decisions
+
+show that you learned from the build process
+
+Recommended 5-page structure
+A strong structure would be:
+
+Introduction and Project Overview
+
+Design and Architecture
+
+Technology Stack Justification
+
+Challenges, Problem Solving, and Lessons Learned
+
+Limitations and Future Improvements
+
+Generative AI Declaration
+
+Conclusion
+
+You probably will not give every section equal space. For 5 pages, a sensible balance is:
+
+Introduction: half a page
+
+Design and Architecture: 1 to 1.5 pages
+
+Technology Justification: about 1 page
+
+Challenges and Lessons Learned: 1 page
+
+Limitations and Future Improvements: half to 1 page
+
+AI Declaration: short
+
+Conclusion: short
+
+1) Introduction and Project Overview
+Purpose
+Explain:
+
+what your API is
+
+what problem it solves
+
+why you chose this project
+
+what the final scope became
+
+What to include
+Mention that your system is a Hotel Booking Intelligence API built around the Hotel Booking Demand dataset, extended with operational data such as incidents and manager notes. Explain that the goal was not just to display raw booking data, but to create a backend system that supports analysis, operational oversight, and intelligent insight generation.
+
+Also explain your final narrowed scope:
+
+imported bookings dataset
+
+incidents CRUD
+
+manager notes CRUD
+
+analytics endpoints
+
+risk scoring / insight endpoint
+
+This section should show that the project is more than a basic CRUD app.
+
+What tone to use
+Keep it concise and purposeful. You are setting up the report, not telling the whole story yet.
+
+Example angle
+The project was designed as a RESTful backend API that combines historical hotel booking data with user-generated operational records. The intention was to transform a static dataset into a more realistic operational intelligence system capable of supporting both CRUD operations and decision-support analytics.
+
+2) Design and Architecture
+This is probably the most important section.
+
+Purpose
+Show how you structured the system and why.
+
+What to include
+a) Architectural style
+State that you used a layered architecture. Explain the layers:
+
+Routers for HTTP request handling
+
+Schemas for validation and serialization
+
+Services for business logic
+
+Models for ORM/database representation
+
+Database/core config for infrastructure concerns
+
+Then explain why that was useful:
+
+clearer separation of concerns
+
+improved maintainability
+
+easier testing
+
+easier debugging
+
+more scalable than putting everything in one file
+
+b) Data model design
+Explain the final database schema:
+
+bookings
+
+incidents
+
+manager_notes
+
+Then justify why you kept it lean:
+
+manageable within coursework time
+
+enough relational structure to show sound design
+
+avoids overengineering
+
+supports meaningful queries and analytics
+
+Explain the relationships:
+
+a booking can have many incidents
+
+a booking can have many manager notes
+
+This helps show relational thinking.
+
+c) API design decisions
+Mention:
+
+RESTful endpoint naming
+
+read-focused access for imported bookings
+
+full CRUD for incidents and notes
+
+analytics endpoints for summary information
+
+insight endpoint for risk scoring
+
+You can say that this gave the API a balanced design:
+
+operational
+
+analytical
+
+intelligent
+
+d) Intelligent feature design
+Discuss the cancellation-risk endpoint. Explain that instead of building a heavy machine-learning model, you chose a rule-based heuristic because it was:
+
+explainable
+
+easier to validate
+
+appropriate for the time available
+
+easier to justify in a technical report and viva
+
+That point is strong because it shows judgment.
+
+Good sentence to include
+A key design decision was to prioritise explainability over complexity. Rather than implementing a black-box predictive model, the system used a transparent rule-based scoring mechanism for cancellation risk, allowing the logic to be inspected and justified.
+
+3) Technology Stack Justification
+This section should not just list tools. It should explain why each one was suitable.
+
+a) FastAPI
+Include points like:
+
+lightweight and modern Python web framework
+
+automatic OpenAPI/Swagger docs
+
+request validation through Pydantic
+
+clean route definition
+
+suitable for building REST APIs quickly
+
+good for coursework because it reduces boilerplate while still encouraging good API design
+
+Also mention that FastAPI helped you focus more on architecture and endpoint behaviour rather than framework setup overhead.
+
+b) SQLAlchemy
+Include:
+
+ORM abstraction over raw SQL
+
+supports relational modelling clearly
+
+useful for defining relationships between bookings, incidents, and notes
+
+works well with layered architecture
+
+makes queries and inserts easier to organize
+
+supports future migration to larger databases if needed
+
+You can also say it gave you a better understanding of the boundary between Python objects and relational tables.
+
+c) SQLite
+Include:
+
+lightweight and file-based
+
+no separate server setup required
+
+good for local coursework development
+
+suitable for a single-developer academic project
+
+integrates smoothly with SQLAlchemy
+
+sufficient for the dataset size and project scope
+
+Then be honest about the trade-off:
+
+not ideal for production-scale concurrency
+
+chosen because simplicity and fast setup were more important than enterprise-scale deployment
+
+d) Why this stack worked together
+This part matters. Say something like:
+
+FastAPI handled the API layer
+
+SQLAlchemy handled persistence and relational modelling
+
+SQLite provided a simple local storage backend
+
+Together they gave you a stack that was:
+
+quick to build with
+
+easy to reason about
+
+appropriate for a backend-focused coursework project
+
+4) Challenges Faced, Problem Solving, and Lessons Learned
+This section is where you show reflection and independence.
+
+Purpose
+Demonstrate that you encountered real engineering problems and learned from them.
+
+What to include
+Choose 3 to 4 real challenges. For each one, use this mini-structure:
+
+what the challenge was
+
+why it mattered
+
+how you addressed it
+
+what you learned
+
+Good challenge examples for your project
+a) Importing and cleaning the dataset
+You had to deal with:
+
+large CSV size
+
+mapping many columns
+
+"NULL" string values
+
+batch insertion for performance
+
+Lesson:
+
+real-world datasets need preprocessing
+
+database import is not just “load file and done”
+
+b) Designing a lean schema
+Challenge:
+
+avoiding too many tables/endpoints
+
+balancing ambition with time constraints
+
+Lesson:
+
+good design is often about what you leave out
+
+a smaller but coherent system is stronger than a bloated one
+
+c) Structuring the application cleanly
+Challenge:
+
+moving from “just make it work” to layered design
+
+separating routers, services, models, and schemas
+
+Lesson:
+
+clean structure makes later development easier
+
+maintainability matters even in small systems
+
+d) Designing the insight endpoint
+Challenge:
+
+wanting something “intelligent” without overcommitting to machine learning
+
+deciding how to make the feature realistic and explainable
+
+Lesson:
+
+intelligent systems do not always need complex AI
+
+explainable heuristics can still add strong value
+
+e) Testing with a separate database
+Challenge:
+
+isolating tests from production data
+
+setting up dependency overrides and fixtures
+
+Lesson:
+
+testability is influenced by architecture
+
+dependency injection makes systems easier to test
+
+Tone
+Be honest and reflective, not dramatic. The point is to sound thoughtful and mature.
+
+Good reflective sentence
+One of the most important lessons from the project was that architectural clarity has a direct impact on development speed. Although creating separate routers, services, and schemas required more effort initially, it reduced confusion significantly once the number of endpoints increased.
+
+5) Limitations and Future Improvements
+This section should be honest but constructive.
+
+Purpose
+Show awareness of what your system does not yet do, and how it could evolve.
+
+Limitations to mention
+a) SQLite limitations
+limited concurrency
+
+not suitable for larger multi-user deployment
+
+acceptable for coursework, but not ideal for production
+
+b) Rule-based scoring limitations
+heuristic weights are manually chosen
+
+not empirically trained
+
+may not generalize perfectly
+
+useful for explainability, but less robust than a validated predictive model
+
+c) Authentication / authorization absent
+no user accounts or role-based access control
+
+endpoints assume trusted internal access
+
+d) Data quality / imported dataset limitations
+historical dataset is static
+
+imported data may contain missing or simplified fields
+
+operational realism is limited by source data
+
+e) Limited operational depth
+only two user-generated operational tables
+
+no audit logs, staff accounts, workflow states, or escalation tracking
+
+Future improvements
+Pair each limitation with realistic future work:
+
+migrate from SQLite to PostgreSQL
+
+add authentication and role-based access control
+
+replace heuristic risk scoring with a trained ML model
+
+add pagination, sorting, and richer filters
+
+add dashboards or a frontend
+
+add more operational entities such as alerts or follow-up tasks
+
+containerize deployment
+
+add CI/CD and broader automated testing
+
+Best approach
+Don’t make the system sound weak. Frame these as natural next steps after a successful MVP.
+
+Good sentence
+The current implementation should be understood as a focused MVP rather than a production-ready platform. Its limitations are largely the result of deliberate scope control, allowing the project to prioritise architectural quality and clear functionality within the available timeframe.
+
+6) Generative AI Declaration
+This should be short, clear, and honest.
+
+Purpose
+Show transparency about how AI was used.
+
+What to include
+State:
+
+which tool(s) you used
+
+what you used them for
+
+what you remained responsible for
+
+For example:
+
+brainstorming system ideas
+
+refining architecture options
+
+generating code scaffolds or examples
+
+clarifying documentation concepts
+
+improving report wording
+
+Then clearly state that:
+
+you reviewed, edited, and integrated the final work yourself
+
+design decisions and final implementation choices were your own responsibility
+
+Suggested wording
+Generative AI tools were used during the development of this coursework to support brainstorming, code structuring, debugging guidance, and report drafting. These tools were used as an aid rather than a replacement for independent work. All final design decisions, implementation choices, testing decisions, and written conclusions were reviewed and adapted by the author.
+
+If your module has a stricter required format, follow that wording instead.
+
+7) Conclusion
+Keep this brief.
+
+Purpose
+End by reinforcing the quality of your decisions.
+
+What to include
+Summarise:
+
+what you built
+
+why the design was appropriate
+
+what you learned
+
+why the project reflects the module aims
+
+Good angle
+Overall, the project demonstrated the design of a structured and purposeful REST API that combined imported data, operational CRUD features, analytics, and a simple intelligent insight mechanism. The final system reflects not only technical implementation, but also iterative decision-making, scope control, and reflective learning.
+
+Extra tip: how to make it feel stronger
+Across the report, keep using this pattern:
+
+decision
+
+justification
+
+trade-off
+
+reflection
+
+That will make the report feel much more mature.
+
+For example, instead of writing:
+
+I used SQLite because it is easy.
+
+write:
+
+SQLite was selected because it enabled rapid local development with minimal configuration overhead, which was appropriate for a single-developer coursework project. The trade-off is that it does not offer the concurrency or deployment flexibility expected in production systems, but this was considered acceptable within the project scope.
+
+That style will score better.
+
+Suggested final heading structure
+You could use these exact headings:
+
+1. Introduction
+2. System Design and Architecture
+3. Justification of Technology Stack
+4. Challenges Faced and Lessons Learned
+5. Limitations and Future Improvements
+6. Generative AI Declaration
+7. Conclusion
+If you want, I can turn this into a full 5-page report outline with paragraph prompts under each heading, so you can start writing immediately.
+
+
+
+
