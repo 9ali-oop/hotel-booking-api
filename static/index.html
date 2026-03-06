@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Booking Intelligence Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg); color: var(--text); line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white; padding: 1.5rem 2rem;
+        }
+        .header h1 { font-size: 1.5rem; font-weight: 600; }
+        .header p { opacity: 0.85; font-size: 0.9rem; margin-top: 0.25rem; }
+        .nav {
+            display: flex; gap: 0.5rem; background: white; padding: 0.75rem 2rem;
+            border-bottom: 1px solid var(--border); flex-wrap: wrap;
+        }
+        .nav button {
+            padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 6px;
+            background: white; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;
+        }
+        .nav button:hover { background: var(--bg); }
+        .nav button.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+        .grid { display: grid; gap: 1.5rem; }
+        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); }
+        .grid-3 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+        .card {
+            background: var(--card); border-radius: 8px; padding: 1.25rem;
+            border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .card h3 { font-size: 1rem; margin-bottom: 1rem; color: var(--text-muted); font-weight: 500; }
+        .stat-value { font-size: 2rem; font-weight: 700; }
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th, td { padding: 0.6rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+        th { font-weight: 600; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; }
+        .badge {
+            display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px;
+            font-size: 0.75rem; font-weight: 500;
+        }
+        .badge-open { background: #fef3c7; color: #92400e; }
+        .badge-investigating { background: #dbeafe; color: #1e40af; }
+        .badge-resolved { background: #dcfce7; color: #166534; }
+        .badge-risk-high { background: #fecaca; color: #991b1b; }
+        .badge-risk-med { background: #fed7aa; color: #9a3412; }
+        .badge-risk-low { background: #d9f99d; color: #3f6212; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.3rem; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 0.5rem; border: 1px solid var(--border);
+            border-radius: 6px; font-size: 0.85rem;
+        }
+        .btn {
+            padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer;
+            font-size: 0.85rem; font-weight: 500; transition: all 0.2s;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.75rem; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .chart-container { position: relative; height: 300px; }
+        .loading { text-align: center; padding: 2rem; color: var(--text-muted); }
+        .error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 1rem; border-radius: 6px; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Hotel Booking Intelligence Dashboard</h1>
+        <p>Operational analytics and incident management for hotel booking data</p>
+    </div>
+
+    <div class="nav">
+        <button class="active" onclick="showSection('overview')">Overview</button>
+        <button onclick="showSection('bookings')">Bookings</button>
+        <button onclick="showSection('incidents')">Incidents</button>
+        <button onclick="showSection('notes')">Manager Notes</button>
+        <button onclick="showSection('analytics')">Analytics</button>
+        <button onclick="showSection('risk')">Risk Analysis</button>
+    </div>
+
+    <div class="container">
+        <!-- OVERVIEW SECTION -->
+        <div id="overview" class="section active">
+            <div class="grid grid-3" id="overview-stats" style="margin-bottom: 1.5rem;">
+                <div class="card"><h3>Total Bookings</h3><div class="stat-value" id="stat-total">—</div></div>
+                <div class="card"><h3>Cancellation Rate</h3><div class="stat-value" id="stat-cancel">—</div></div>
+                <div class="card"><h3>Active Incidents</h3><div class="stat-value" id="stat-incidents">—</div></div>
+            </div>
+            <div class="grid grid-2">
+                <div class="card">
+                    <h3>Monthly Booking Demand</h3>
+                    <div class="chart-container"><canvas id="chart-monthly"></canvas></div>
+                </div>
+                <div class="card">
+                    <h3>Market Segment Performance</h3>
+                    <div class="chart-container"><canvas id="chart-segments"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOOKINGS SECTION -->
+        <div id="bookings" class="section">
+            <div class="card">
+                <div class="flex-between" style="margin-bottom: 1rem;">
+                    <h3 style="margin:0">Booking Records</h3>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <select id="filter-hotel" onchange="loadBookings()" style="padding: 0.4rem; border-radius: 4px; border: 1px solid var(--border); font-size: 0.8rem;">
+                            <option value="">All Hotels</option>
+                            <option value="Resort Hotel">Resort Hotel</option>
+                            <option value="City Hotel">City Hotel</option>
+                        </select>
+                        <select id="filter-canceled" onchange="loadBookings()" style="padding: 0.4rem; border-radius: 4px; border: 1px solid var(--border); font-size: 0.8rem;">
+                            <option value="">All Statuses</option>
+                            <option value="0">Not Canceled</option>
+                            <option value="1">Canceled</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="bookings-table"><div class="loading">Loading bookings...</div></div>
+                <div style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: center;">
+                    <button class="btn btn-primary btn-sm" onclick="changePage(-1)">Previous</button>
+                    <span id="page-info" style="padding: 0.3rem 0.6rem; font-size: 0.85rem;"></span>
+                    <button class="btn btn-primary btn-sm" onclick="changePage(1)">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- INCIDENTS SECTION -->
+        <div id="incidents" class="section">
+            <div class="grid grid-2">
+                <div class="card">
+                    <h3>Report New Incident</h3>
+                    <form id="incident-form" onsubmit="createIncident(event)">
+                        <div class="form-group">
+                            <label>Booking ID</label>
+                            <input type="number" id="inc-booking-id" required min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Incident Type</label>
+                            <select id="inc-type" required>
+                                <option value="room_mismatch">Room Mismatch</option>
+                                <option value="complaint">Guest Complaint</option>
+                                <option value="overbooking">Overbooking</option>
+                                <option value="maintenance">Maintenance</option>
+                                <option value="no_show">No Show</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Severity (1-5)</label>
+                            <input type="number" id="inc-severity" required min="1" max="5" value="3">
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="inc-desc" required rows="3" minlength="5"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Reported By</label>
+                            <input type="text" id="inc-reporter" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit Incident</button>
+                    </form>
+                </div>
+                <div class="card">
+                    <h3>Recent Incidents</h3>
+                    <div id="incidents-list"><div class="loading">Loading...</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NOTES SECTION -->
+        <div id="notes" class="section">
+            <div class="grid grid-2">
+                <div class="card">
+                    <h3>Add Manager Note</h3>
+                    <form id="note-form" onsubmit="createNote(event)">
+                        <div class="form-group">
+                            <label>Booking ID</label>
+                            <input type="number" id="note-booking-id" required min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Note</label>
+                            <textarea id="note-text" required rows="4" minlength="1"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Author</label>
+                            <input type="text" id="note-author" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Note</button>
+                    </form>
+                </div>
+                <div class="card">
+                    <h3>Recent Notes</h3>
+                    <div id="notes-list"><div class="loading">Loading...</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANALYTICS SECTION -->
+        <div id="analytics" class="section">
+            <div class="grid grid-2">
+                <div class="card">
+                    <h3>Cancellation Rate by Hotel</h3>
+                    <div class="chart-container"><canvas id="chart-cancel-hotel"></canvas></div>
+                </div>
+                <div class="card">
+                    <h3>Cancellation Rate by Market Segment</h3>
+                    <div class="chart-container"><canvas id="chart-cancel-segment"></canvas></div>
+                </div>
+            </div>
+            <div class="card" style="margin-top: 1.5rem;">
+                <h3>Average Daily Rate by Segment</h3>
+                <div class="chart-container"><canvas id="chart-adr"></canvas></div>
+            </div>
+        </div>
+
+        <!-- RISK SECTION -->
+        <div id="risk" class="section">
+            <div class="card">
+                <div class="flex-between" style="margin-bottom: 1rem;">
+                    <h3 style="margin: 0;">High-Risk Bookings</h3>
+                    <div>
+                        <label style="font-size: 0.8rem;">Min risk score: </label>
+                        <input type="range" id="risk-threshold" min="0" max="100" value="50"
+                               oninput="document.getElementById('risk-val').textContent = this.value + '%'; debouncedLoadRisk();"
+                               style="vertical-align: middle;">
+                        <span id="risk-val" style="font-size: 0.8rem;">50%</span>
+                    </div>
+                </div>
+                <div id="risk-table"><div class="loading">Loading risk analysis...</div></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = '';  // Empty string = same origin
+        let currentPage = 1;
+        let charts = {};
+
+        // ─── Navigation ─────────────────────────────────────────
+        function showSection(name) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById(name).classList.add('active');
+            event.target.classList.add('active');
+
+            // Load data for the section
+            if (name === 'overview') loadOverview();
+            else if (name === 'bookings') loadBookings();
+            else if (name === 'incidents') loadIncidents();
+            else if (name === 'notes') loadNotes();
+            else if (name === 'analytics') loadAnalytics();
+            else if (name === 'risk') loadRiskBookings();
+        }
+
+        // ─── API Helper ─────────────────────────────────────────
+        async function api(path) {
+            const res = await fetch(API + path);
+            if (!res.ok) throw new Error(`API error: ${res.status}`);
+            return res.json();
+        }
+
+        async function apiPost(path, body) {
+            const res = await fetch(API + path, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            return { ok: res.ok, status: res.status, data: await res.json() };
+        }
+
+        async function apiDelete(path) {
+            const res = await fetch(API + path, { method: 'DELETE' });
+            return { ok: res.ok, data: await res.json() };
+        }
+
+        // ─── Overview ───────────────────────────────────────────
+        async function loadOverview() {
+            try {
+                const [cancel, monthly, segments] = await Promise.all([
+                    api('/analytics/cancellation-rate'),
+                    api('/analytics/monthly-demand'),
+                    api('/analytics/market-segment-performance'),
+                ]);
+
+                // Stats cards
+                const overall = cancel.find(c => !c.hotel) || cancel[0];
+                document.getElementById('stat-total').textContent = overall.total_bookings.toLocaleString();
+                document.getElementById('stat-cancel').textContent = (overall.cancellation_rate * 100).toFixed(1) + '%';
+
+                try {
+                    const incidents = await api('/incidents?per_page=1');
+                    document.getElementById('stat-incidents').textContent = Array.isArray(incidents) ? incidents.length : '0';
+                } catch { document.getElementById('stat-incidents').textContent = '0'; }
+
+                // Monthly demand chart
+                if (charts['monthly']) charts['monthly'].destroy();
+                const ctx1 = document.getElementById('chart-monthly').getContext('2d');
+                const monthOrder = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+                const latestYear = Math.max(...monthly.map(m => m.year));
+                const yearData = monthly.filter(m => m.year === latestYear).sort((a, b) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month));
+
+                charts['monthly'] = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: yearData.map(d => d.month.substring(0, 3)),
+                        datasets: [{
+                            label: `Bookings (${latestYear})`,
+                            data: yearData.map(d => d.booking_count),
+                            backgroundColor: 'rgba(37, 99, 235, 0.7)',
+                            borderRadius: 4,
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+
+                // Market segment chart
+                if (charts['segments']) charts['segments'].destroy();
+                const ctx2 = document.getElementById('chart-segments').getContext('2d');
+                const colors = ['#2563eb','#7c3aed','#db2777','#ea580c','#ca8a04','#16a34a','#0891b2'];
+                charts['segments'] = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: segments.map(s => s.market_segment),
+                        datasets: [{
+                            data: segments.map(s => s.total_bookings),
+                            backgroundColor: colors.slice(0, segments.length),
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            } catch (err) {
+                console.error('Overview load error:', err);
+            }
+        }
+
+        // ─── Bookings ───────────────────────────────────────────
+        async function loadBookings() {
+            const hotel = document.getElementById('filter-hotel').value;
+            const canceled = document.getElementById('filter-canceled').value;
+            let url = `/bookings?page=${currentPage}&per_page=15`;
+            if (hotel) url += `&hotel=${encodeURIComponent(hotel)}`;
+            if (canceled !== '') url += `&is_canceled=${canceled}`;
+
+            try {
+                const data = await api(url);
+                const totalPages = Math.ceil(data.total / data.per_page);
+                document.getElementById('page-info').textContent = `Page ${data.page} of ${totalPages} (${data.total} total)`;
+
+                if (data.bookings.length === 0) {
+                    document.getElementById('bookings-table').innerHTML = '<div class="loading">No bookings found.</div>';
+                    return;
+                }
+
+                let html = '<table><thead><tr><th>ID</th><th>Hotel</th><th>Month</th><th>Country</th><th>Segment</th><th>ADR</th><th>Status</th></tr></thead><tbody>';
+                data.bookings.forEach(b => {
+                    const status = b.is_canceled ? '<span class="badge badge-risk-high">Canceled</span>' : '<span class="badge badge-resolved">Active</span>';
+                    html += `<tr><td>${b.booking_id}</td><td>${b.hotel}</td><td>${b.arrival_date_month} ${b.arrival_date_year}</td><td>${b.country || '—'}</td><td>${b.market_segment || '—'}</td><td>$${(b.adr || 0).toFixed(2)}</td><td>${status}</td></tr>`;
+                });
+                html += '</tbody></table>';
+                document.getElementById('bookings-table').innerHTML = html;
+            } catch (err) {
+                document.getElementById('bookings-table').innerHTML = `<div class="error">Error loading bookings: ${err.message}</div>`;
+            }
+        }
+
+        function changePage(delta) {
+            currentPage = Math.max(1, currentPage + delta);
+            loadBookings();
+        }
+
+        // ─── Incidents ──────────────────────────────────────────
+        async function loadIncidents() {
+            try {
+                const data = await api('/incidents?per_page=50');
+                if (data.length === 0) {
+                    document.getElementById('incidents-list').innerHTML = '<div class="loading">No incidents reported yet.</div>';
+                    return;
+                }
+                let html = '<table><thead><tr><th>ID</th><th>Booking</th><th>Type</th><th>Severity</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+                data.forEach(i => {
+                    const badge = `badge-${i.status}`;
+                    html += `<tr><td>${i.incident_id}</td><td>${i.booking_id}</td><td>${i.incident_type}</td><td>${'★'.repeat(i.severity)}</td><td><span class="badge ${badge}">${i.status}</span></td><td><button class="btn btn-danger btn-sm" onclick="deleteIncident(${i.incident_id})">Delete</button></td></tr>`;
+                });
+                html += '</tbody></table>';
+                document.getElementById('incidents-list').innerHTML = html;
+            } catch (err) {
+                document.getElementById('incidents-list').innerHTML = `<div class="error">${err.message}</div>`;
+            }
+        }
+
+        async function createIncident(e) {
+            e.preventDefault();
+            const result = await apiPost('/incidents', {
+                booking_id: parseInt(document.getElementById('inc-booking-id').value),
+                incident_type: document.getElementById('inc-type').value,
+                severity: parseInt(document.getElementById('inc-severity').value),
+                description: document.getElementById('inc-desc').value,
+                reported_by: document.getElementById('inc-reporter').value,
+            });
+            if (result.ok) {
+                document.getElementById('incident-form').reset();
+                loadIncidents();
+            } else {
+                alert('Error: ' + JSON.stringify(result.data.detail));
+            }
+        }
+
+        async function deleteIncident(id) {
+            if (!confirm('Delete this incident?')) return;
+            await apiDelete(`/incidents/${id}`);
+            loadIncidents();
+        }
+
+        // ─── Notes ──────────────────────────────────────────────
+        async function loadNotes() {
+            try {
+                const data = await api('/notes?per_page=50');
+                if (data.length === 0) {
+                    document.getElementById('notes-list').innerHTML = '<div class="loading">No notes yet.</div>';
+                    return;
+                }
+                let html = '<table><thead><tr><th>ID</th><th>Booking</th><th>Author</th><th>Note</th><th>Action</th></tr></thead><tbody>';
+                data.forEach(n => {
+                    html += `<tr><td>${n.note_id}</td><td>${n.booking_id}</td><td>${n.author}</td><td>${n.note_text.substring(0, 60)}${n.note_text.length > 60 ? '...' : ''}</td><td><button class="btn btn-danger btn-sm" onclick="deleteNote(${n.note_id})">Delete</button></td></tr>`;
+                });
+                html += '</tbody></table>';
+                document.getElementById('notes-list').innerHTML = html;
+            } catch (err) {
+                document.getElementById('notes-list').innerHTML = `<div class="error">${err.message}</div>`;
+            }
+        }
+
+        async function createNote(e) {
+            e.preventDefault();
+            const result = await apiPost('/notes', {
+                booking_id: parseInt(document.getElementById('note-booking-id').value),
+                note_text: document.getElementById('note-text').value,
+                author: document.getElementById('note-author').value,
+            });
+            if (result.ok) {
+                document.getElementById('note-form').reset();
+                loadNotes();
+            } else {
+                alert('Error: ' + JSON.stringify(result.data.detail));
+            }
+        }
+
+        async function deleteNote(id) {
+            if (!confirm('Delete this note?')) return;
+            await apiDelete(`/notes/${id}`);
+            loadNotes();
+        }
+
+        // ─── Analytics ──────────────────────────────────────────
+        async function loadAnalytics() {
+            try {
+                const [cancel, segments] = await Promise.all([
+                    api('/analytics/cancellation-rate'),
+                    api('/analytics/market-segment-performance'),
+                ]);
+
+                // Cancellation by hotel
+                const hotels = cancel.filter(c => c.hotel);
+                if (charts['cancelHotel']) charts['cancelHotel'].destroy();
+                charts['cancelHotel'] = new Chart(document.getElementById('chart-cancel-hotel'), {
+                    type: 'bar',
+                    data: {
+                        labels: hotels.map(h => h.hotel),
+                        datasets: [{
+                            label: 'Cancellation Rate',
+                            data: hotels.map(h => (h.cancellation_rate * 100).toFixed(1)),
+                            backgroundColor: ['#2563eb', '#7c3aed'],
+                            borderRadius: 4,
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100, title: { display: true, text: '%' } } }, plugins: { legend: { display: false } } }
+                });
+
+                // Cancellation by segment
+                if (charts['cancelSeg']) charts['cancelSeg'].destroy();
+                charts['cancelSeg'] = new Chart(document.getElementById('chart-cancel-segment'), {
+                    type: 'bar',
+                    data: {
+                        labels: segments.map(s => s.market_segment),
+                        datasets: [{
+                            label: 'Cancellation Rate %',
+                            data: segments.map(s => (s.cancellation_rate * 100).toFixed(1)),
+                            backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                            borderRadius: 4,
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', scales: { x: { beginAtZero: true, max: 100 } }, plugins: { legend: { display: false } } }
+                });
+
+                // ADR by segment
+                if (charts['adr']) charts['adr'].destroy();
+                charts['adr'] = new Chart(document.getElementById('chart-adr'), {
+                    type: 'bar',
+                    data: {
+                        labels: segments.map(s => s.market_segment),
+                        datasets: [{
+                            label: 'Avg Daily Rate ($)',
+                            data: segments.map(s => s.average_adr),
+                            backgroundColor: 'rgba(22, 163, 74, 0.7)',
+                            borderRadius: 4,
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+            } catch (err) {
+                console.error('Analytics error:', err);
+            }
+        }
+
+        // ─── Risk Analysis ──────────────────────────────────────
+        let riskDebounceTimer = null;
+        function debouncedLoadRisk() {
+            clearTimeout(riskDebounceTimer);
+            riskDebounceTimer = setTimeout(loadRiskBookings, 300);
+        }
+
+        async function loadRiskBookings() {
+            const threshold = document.getElementById('risk-threshold').value / 100;
+            try {
+                const data = await api(`/insights/high-risk-bookings?min_risk=${threshold}&limit=30`);
+                if (data.length === 0) {
+                    document.getElementById('risk-table').innerHTML = '<div class="loading">No bookings above this risk threshold.</div>';
+                    return;
+                }
+                let html = '<table><thead><tr><th>Booking ID</th><th>Hotel</th><th>Lead Time</th><th>Prev Cancellations</th><th>Risk Score</th><th>Risk Band</th><th>Risk Factors</th></tr></thead><tbody>';
+                data.forEach(b => {
+                    const riskClass = b.risk_band === 'high' ? 'badge-risk-high' : b.risk_band === 'medium' ? 'badge-risk-med' : 'badge-risk-low';
+                    const bandLabel = b.risk_band.charAt(0).toUpperCase() + b.risk_band.slice(1);
+                    html += `<tr><td>${b.booking_id}</td><td>${b.hotel}</td><td>${b.lead_time} days</td><td>${b.previous_cancellations}</td><td><span class="badge ${riskClass}">${(b.risk_score * 100).toFixed(0)}%</span></td><td><span class="badge ${riskClass}">${bandLabel}</span></td><td>${b.risk_factors.join(', ')}</td></tr>`;
+                });
+                html += '</tbody></table>';
+                document.getElementById('risk-table').innerHTML = html;
+            } catch (err) {
+                document.getElementById('risk-table').innerHTML = `<div class="error">${err.message}</div>`;
+            }
+        }
+
+        // ─── Init ───────────────────────────────────────────────
+        loadOverview();
+    </script>
+</body>
+</html>
