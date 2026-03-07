@@ -283,8 +283,8 @@
                     </div>
                 </div>
                 <div class="api-key-row">
-                    <label>🔑 API Key for AI Analysis:</label>
-                    <input type="password" id="ai-api-key" placeholder="Enter your API key to unlock AI narratives…">
+                    <label>🔑 API Key:</label>
+                    <input type="password" id="ai-api-key" value="hotel-booking-dev-key-2025">
                 </div>
                 <div id="risk-table"><div class="loading">Loading risk analysis...</div></div>
             </div>
@@ -655,6 +655,7 @@
 
             try {
                 const res = await fetch(`/insights/ai-risk-assessment/${bookingId}`, {
+                    method: 'POST',
                     headers: { 'X-API-Key': apiKey }
                 });
                 if (!res.ok) {
