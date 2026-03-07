@@ -63,6 +63,39 @@
         .badge-risk-high { background: #fecaca; color: #991b1b; }
         .badge-risk-med { background: #fed7aa; color: #9a3412; }
         .badge-risk-low { background: #d9f99d; color: #3f6212; }
+        .ai-panel {
+            display: none; background: linear-gradient(135deg, #eff6ff, #f0fdf4);
+            border: 1px solid #bfdbfe; border-radius: 8px; padding: 1rem 1.25rem;
+            margin-top: 0.5rem; font-size: 0.875rem; line-height: 1.6;
+        }
+        .ai-panel.visible { display: block; }
+        .ai-panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .ai-panel-header strong { color: #1d4ed8; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .ai-badge { font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 4px; background: #dbeafe; color: #1e40af; }
+        .ai-narrative { color: #1e293b; white-space: pre-wrap; }
+        .ai-loading { color: #6b7280; font-style: italic; }
+        .ai-error { color: #dc2626; }
+        .btn-ai {
+            padding: 0.25rem 0.6rem; background: #eff6ff; color: #2563eb;
+            border: 1px solid #bfdbfe; border-radius: 5px; cursor: pointer;
+            font-size: 0.75rem; font-weight: 500; transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .btn-ai:hover { background: #2563eb; color: white; border-color: #2563eb; }
+        .btn-ai.active { background: #2563eb; color: white; border-color: #2563eb; }
+        .api-key-row {
+            display: flex; align-items: center; gap: 0.5rem;
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;
+            padding: 0.5rem 0.75rem; margin-bottom: 1rem; font-size: 0.8rem;
+        }
+        .api-key-row label { color: #64748b; white-space: nowrap; }
+        .api-key-row input {
+            flex: 1; border: 1px solid #e2e8f0; border-radius: 4px;
+            padding: 0.3rem 0.5rem; font-size: 0.8rem; font-family: monospace;
+        }
         .form-group { margin-bottom: 1rem; }
         .form-group label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.3rem; }
         .form-group input, .form-group select, .form-group textarea {
@@ -248,6 +281,10 @@
                                style="vertical-align: middle;">
                         <span id="risk-val" style="font-size: 0.8rem;">50%</span>
                     </div>
+                </div>
+                <div class="api-key-row">
+                    <label>🔑 API Key for AI Analysis:</label>
+                    <input type="password" id="ai-api-key" placeholder="Enter your API key to unlock AI narratives…">
                 </div>
                 <div id="risk-table"><div class="loading">Loading risk analysis...</div></div>
             </div>
@@ -550,16 +587,90 @@
                     document.getElementById('risk-table').innerHTML = '<div class="loading">No bookings above this risk threshold.</div>';
                     return;
                 }
-                let html = '<table><thead><tr><th>Booking ID</th><th>Hotel</th><th>Lead Time</th><th>Prev Cancellations</th><th>Risk Score</th><th>Risk Band</th><th>Risk Factors</th></tr></thead><tbody>';
+                let html = `<table><thead><tr>
+                    <th>Booking ID</th><th>Hotel</th><th>Lead Time</th>
+                    <th>Prev Cancellations</th><th>Risk Score</th><th>Risk Band</th>
+                    <th>Risk Factors</th><th>AI Analysis</th>
+                </tr></thead><tbody>`;
                 data.forEach(b => {
                     const riskClass = b.risk_band === 'high' ? 'badge-risk-high' : b.risk_band === 'medium' ? 'badge-risk-med' : 'badge-risk-low';
                     const bandLabel = b.risk_band.charAt(0).toUpperCase() + b.risk_band.slice(1);
-                    html += `<tr><td>${b.booking_id}</td><td>${b.hotel}</td><td>${b.lead_time} days</td><td>${b.previous_cancellations}</td><td><span class="badge ${riskClass}">${(b.risk_score * 100).toFixed(0)}%</span></td><td><span class="badge ${riskClass}">${bandLabel}</span></td><td>${b.risk_factors.join(', ')}</td></tr>`;
+                    html += `<tr id="row-${b.booking_id}">
+                        <td>${b.booking_id}</td>
+                        <td>${b.hotel}</td>
+                        <td>${b.lead_time} days</td>
+                        <td>${b.previous_cancellations}</td>
+                        <td><span class="badge ${riskClass}">${(b.risk_score * 100).toFixed(0)}%</span></td>
+                        <td><span class="badge ${riskClass}">${bandLabel}</span></td>
+                        <td style="font-size:0.78rem;">${b.risk_factors.join(', ')}</td>
+                        <td><button class="btn-ai" id="btn-ai-${b.booking_id}" onclick="runAIAnalysis(${b.booking_id})">✨ Analyse</button></td>
+                    </tr>
+                    <tr id="ai-row-${b.booking_id}" style="display:none;">
+                        <td colspan="8" style="padding: 0.25rem 0.75rem 0.75rem;">
+                            <div class="ai-panel visible" id="ai-panel-${b.booking_id}">
+                                <div class="ai-panel-header">
+                                    <strong>🤖 AI Risk Assessment — Booking #${b.booking_id}</strong>
+                                    <span class="ai-badge" id="ai-model-${b.booking_id}"></span>
+                                </div>
+                                <div class="ai-narrative ai-loading" id="ai-text-${b.booking_id}">Click Analyse to generate an LLM narrative for this booking.</div>
+                            </div>
+                        </td>
+                    </tr>`;
                 });
                 html += '</tbody></table>';
                 document.getElementById('risk-table').innerHTML = html;
             } catch (err) {
                 document.getElementById('risk-table').innerHTML = `<div class="error">${err.message}</div>`;
+            }
+        }
+
+        async function runAIAnalysis(bookingId) {
+            const apiKey = document.getElementById('ai-api-key').value.trim();
+            if (!apiKey) {
+                alert('Please enter your API key in the field above to use AI Analysis.');
+                document.getElementById('ai-api-key').focus();
+                return;
+            }
+
+            const btn = document.getElementById(`btn-ai-${bookingId}`);
+            const aiRow = document.getElementById(`ai-row-${bookingId}`);
+            const aiText = document.getElementById(`ai-text-${bookingId}`);
+            const aiModel = document.getElementById(`ai-model-${bookingId}`);
+
+            // Toggle: if already open and showing result, close it
+            if (aiRow.style.display !== 'none' && !aiText.classList.contains('ai-loading')) {
+                aiRow.style.display = 'none';
+                btn.classList.remove('active');
+                btn.textContent = '✨ Analyse';
+                return;
+            }
+
+            // Show panel and start loading
+            aiRow.style.display = 'table-row';
+            btn.classList.add('active');
+            btn.textContent = '⏳ Loading…';
+            aiText.className = 'ai-narrative ai-loading';
+            aiText.textContent = 'Calling GPT — this may take a few seconds…';
+            aiModel.textContent = '';
+
+            try {
+                const res = await fetch(`/insights/ai-risk-assessment/${bookingId}`, {
+                    headers: { 'X-API-Key': apiKey }
+                });
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || `HTTP ${res.status}`);
+                }
+                const data = await res.json();
+                aiText.className = 'ai-narrative';
+                aiText.textContent = data.ai_assessment;
+                aiModel.textContent = data.ai_source === 'openai' ? `GPT · ${data.ai_model}` : 'Fallback mode';
+                btn.textContent = '✨ Hide';
+            } catch (err) {
+                aiText.className = 'ai-narrative ai-error';
+                aiText.textContent = `Error: ${err.message}`;
+                btn.classList.remove('active');
+                btn.textContent = '✨ Analyse';
             }
         }
 
