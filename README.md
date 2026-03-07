@@ -13,11 +13,14 @@ This API combines **119,390 historical hotel booking records** from the [Kaggle 
 - **Manager Notes (CRUD)**: Attach internal notes to bookings for operational context
 - **Analytics**: Cancellation rates, monthly demand patterns, market segment performance
 - **Intelligent Insights**: Rule-based risk scoring to identify high-risk bookings, operational hotspot detection
+- **AI-Powered Analysis**: LLM integration (OpenAI GPT) generates natural language risk assessments with actionable recommendations
+- **Dual Authentication**: API key + JWT Bearer token support with constant-time key comparison and token expiry
 - **Interactive Dashboard**: Frontend UI for visual analytics and CRUD operations
 - **Auto-generated API Documentation**: Interactive Swagger UI at `/docs`
 - **MCP Server**: Model Context Protocol integration — AI assistants can interact with this API as an MCP tool server
 - **Production Middleware**: CORS, rate limiting (60 req/min), structured request logging, health-check endpoint
 - **CI/CD**: GitHub Actions workflow runs the full test suite on every push
+- **58 Automated Tests**: Comprehensive pytest suite covering CRUD, auth, AI insights, analytics, and edge cases
 
 ## Tech Stack
 
@@ -29,6 +32,8 @@ This API combines **119,390 historical hotel booking records** from the [Kaggle 
 | Database       | SQLite              | Zero-config, portable — runs immediately after cloning       |
 | Testing        | pytest + httpx      | Fast, Pythonic test framework with HTTP client support        |
 | Frontend       | HTML + JS + Chart.js| Single-file dashboard, no build step required                |
+| Authentication | PyJWT + API Key     | Dual auth: API key for services, JWT tokens for users        |
+| AI Integration | OpenAI GPT API      | LLM-powered natural language risk assessments                |
 | Rate Limiting  | slowapi             | Token-bucket rate limiter for FastAPI (60 req/min default)   |
 | MCP            | fastapi-mcp         | Exposes all endpoints as Model Context Protocol tools        |
 | CI/CD          | GitHub Actions      | Automated testing on push across Python 3.10/3.11/3.12      |
