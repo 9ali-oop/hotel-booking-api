@@ -2,8 +2,11 @@
 Tests for the manager notes CRUD endpoints.
 
 Verifies create, list, get-by-id, and delete operations,
-plus validation and error handling.
+plus validation, error handling, and authentication enforcement.
 """
+
+
+AUTH_HEADER = {"X-API-Key": "hotel-booking-dev-key-2025"}
 
 
 class TestNotesCRUD:
@@ -15,12 +18,30 @@ class TestNotesCRUD:
             "booking_id": 1,
             "note_text": "VIP guest — ensure room is ready early",
             "author": "General Manager"
-        })
+        }, headers=AUTH_HEADER)
         assert response.status_code == 201
         data = response.json()
         assert data["booking_id"] == 1
         assert data["author"] == "General Manager"
         assert "note_id" in data
+
+    def test_create_note_no_auth(self, client):
+        """POST /notes without API key should return 401."""
+        response = client.post("/notes", json={
+            "booking_id": 1,
+            "note_text": "Should fail without auth",
+            "author": "Test"
+        })
+        assert response.status_code == 401
+
+    def test_create_note_bad_key(self, client):
+        """POST /notes with wrong API key should return 403."""
+        response = client.post("/notes", json={
+            "booking_id": 1,
+            "note_text": "Should fail with bad key",
+            "author": "Test"
+        }, headers={"X-API-Key": "wrong-key"})
+        assert response.status_code == 403
 
     def test_create_note_invalid_booking(self, client):
         """POST /notes with non-existent booking should return 404."""
@@ -28,7 +49,7 @@ class TestNotesCRUD:
             "booking_id": 99999,
             "note_text": "This should fail",
             "author": "Test"
-        })
+        }, headers=AUTH_HEADER)
         assert response.status_code == 404
 
     def test_create_note_empty_text(self, client):
@@ -37,11 +58,11 @@ class TestNotesCRUD:
             "booking_id": 1,
             "note_text": "",
             "author": "Test"
-        })
+        }, headers=AUTH_HEADER)
         assert response.status_code == 422
 
-    def test_list_notes(self, client):
-        """GET /notes should return a list of notes."""
+    def test_list_notes_no_auth_required(self, client):
+        """GET /notes should work without authentication (read-only)."""
         response = client.get("/notes")
         assert response.status_code == 200
         data = response.json()
@@ -70,18 +91,20 @@ class TestNotesCRUD:
 
     def test_delete_note(self, client):
         """DELETE /notes should remove the note."""
-        # Create a note to delete
         create_resp = client.post("/notes", json={
             "booking_id": 2,
             "note_text": "Temporary note for deletion test",
             "author": "Test Manager"
-        })
+        }, headers=AUTH_HEADER)
         note_id = create_resp.json()["note_id"]
 
-        # Delete it
-        response = client.delete(f"/notes/{note_id}")
+        response = client.delete(f"/notes/{note_id}", headers=AUTH_HEADER)
         assert response.status_code == 200
 
-        # Verify it's gone
         get_resp = client.get(f"/notes/{note_id}")
         assert get_resp.status_code == 404
+
+    def test_delete_note_no_auth(self, client):
+        """DELETE /notes without auth should return 401."""
+        response = client.delete("/notes/1")
+        assert response.status_code == 401

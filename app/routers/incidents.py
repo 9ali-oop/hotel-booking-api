@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from typing import Optional, List
 
 from app.database import get_db
+from app.auth import require_api_key
 from app.models import Incident, Booking
 from app.schemas import (
     IncidentCreate, IncidentUpdate, IncidentPatch,
@@ -30,7 +31,9 @@ router = APIRouter(prefix="/incidents", tags=["Incidents"])
     status_code=201,
     summary="Create a new incident",
     description="Record a new operational incident linked to a booking. "
-                "Validates that the booking exists and that severity is between 1-5."
+                "Validates that the booking exists and that severity is between 1-5. "
+                "Requires API key authentication via X-API-Key header.",
+    dependencies=[Depends(require_api_key)],
 )
 def create_incident(data: IncidentCreate, db: Session = Depends(get_db)):
     """Create a new incident report linked to a booking."""
@@ -111,7 +114,9 @@ def get_incident(incident_id: int, db: Session = Depends(get_db)):
     "/{incident_id}",
     response_model=IncidentResponse,
     summary="Full update of an incident (PUT)",
-    description="Replace all fields of an existing incident. All fields are required."
+    description="Replace all fields of an existing incident. All fields are required. "
+                "Requires API key authentication.",
+    dependencies=[Depends(require_api_key)],
 )
 def update_incident(incident_id: int, data: IncidentUpdate, db: Session = Depends(get_db)):
     """Full update (replace) of an incident."""
@@ -136,7 +141,9 @@ def update_incident(incident_id: int, data: IncidentUpdate, db: Session = Depend
     response_model=IncidentResponse,
     summary="Partial update of an incident (PATCH)",
     description="Update one or more fields of an existing incident. "
-                "Only provided fields will be updated."
+                "Only provided fields will be updated. "
+                "Requires API key authentication.",
+    dependencies=[Depends(require_api_key)],
 )
 def patch_incident(incident_id: int, data: IncidentPatch, db: Session = Depends(get_db)):
     """Partial update of an incident — only provided fields are changed."""
@@ -159,7 +166,9 @@ def patch_incident(incident_id: int, data: IncidentPatch, db: Session = Depends(
 @router.delete(
     "/{incident_id}",
     response_model=MessageResponse,
-    summary="Delete an incident"
+    summary="Delete an incident",
+    description="Permanently remove an incident report. Requires API key authentication.",
+    dependencies=[Depends(require_api_key)],
 )
 def delete_incident(incident_id: int, db: Session = Depends(get_db)):
     """Delete an incident by its ID."""

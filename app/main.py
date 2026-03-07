@@ -33,6 +33,7 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.database import engine, Base, SessionLocal
 from app.routers import bookings, incidents, notes, analytics, insights
+from app.routers import auth_router, ai_insights
 
 # ---------------------------------------------------------------------------
 # Structured logging configuration
@@ -68,8 +69,13 @@ app = FastAPI(
         "- **Incidents** — full CRUD for operational incident reports\n"
         "- **Manager Notes** — internal annotations linked to bookings\n"
         "- **Analytics** — cancellation rates, monthly demand trends, market segment performance\n"
-        "- **Insights** — rule-based cancellation risk scoring with risk bands, operational hotspot detection\n\n"
-        "**Production features:** CORS, rate limiting (60 req/min), structured logging, health-check endpoint\n\n"
+        "- **Insights** — rule-based cancellation risk scoring with risk bands, operational hotspot detection\n"
+        "- **AI Insights** — LLM-powered natural language risk assessments (OpenAI GPT integration)\n\n"
+        "**Security:** Dual authentication (API Key + JWT Bearer tokens) on all write endpoints. "
+        "Obtain a token via `POST /auth/token`.\n\n"
+        "**Production features:** CORS, rate limiting (60 req/min), structured logging, "
+        "health-check endpoint, MCP server compatibility\n\n"
+        "**Default dev API key:** `hotel-booking-dev-key-2025` — click **Authorize** above to set it.\n\n"
         "Built for COMP3011 Web Services and Web Data — University of Leeds"
     ),
     version="1.0.0",
@@ -123,11 +129,13 @@ if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Register all routers
+app.include_router(auth_router.router)
 app.include_router(bookings.router)
 app.include_router(incidents.router)
 app.include_router(notes.router)
 app.include_router(analytics.router)
 app.include_router(insights.router)
+app.include_router(ai_insights.router)
 
 
 # ---------------------------------------------------------------------------

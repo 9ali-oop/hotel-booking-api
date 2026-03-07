@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from typing import Optional, List
 
 from app.database import get_db
+from app.auth import require_api_key
 from app.models import ManagerNote, Booking
 from app.schemas import NoteCreate, NoteResponse, MessageResponse
 
@@ -26,7 +27,9 @@ router = APIRouter(prefix="/notes", tags=["Manager Notes"])
     status_code=201,
     summary="Create a new manager note",
     description="Attach an internal note to a booking. "
-                "Validates that the referenced booking exists."
+                "Validates that the referenced booking exists. "
+                "Requires API key authentication via X-API-Key header.",
+    dependencies=[Depends(require_api_key)],
 )
 def create_note(data: NoteCreate, db: Session = Depends(get_db)):
     """Create a new manager note linked to a booking."""
@@ -94,7 +97,9 @@ def get_note(note_id: int, db: Session = Depends(get_db)):
 @router.delete(
     "/{note_id}",
     response_model=MessageResponse,
-    summary="Delete a manager note"
+    summary="Delete a manager note",
+    description="Permanently remove a manager note. Requires API key authentication.",
+    dependencies=[Depends(require_api_key)],
 )
 def delete_note(note_id: int, db: Session = Depends(get_db)):
     """Delete a manager note by its ID."""
