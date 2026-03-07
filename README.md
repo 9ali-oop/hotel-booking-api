@@ -78,6 +78,9 @@ The API will be available at:
 - **ReDoc**: http://localhost:8000/redoc
 - **Dashboard**: http://localhost:8000/dashboard
 - **Health Check**: http://localhost:8000/health
+
+- - **Live Deployment**: https://web-production-c9799.up.railway.app/docs
+
 - **MCP Server**: http://localhost:8000/mcp
 
 ### Run Tests
