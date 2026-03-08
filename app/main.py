@@ -60,23 +60,22 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
 app = FastAPI(
     title="Hotel Booking Intelligence API",
     description=(
-        "A RESTful API for hotel booking analysis and operational management.\n\n"
-        "Combines 119,390 historical booking records from the "
+        "RESTful intelligence layer over the "
         "[Hotel Booking Demand](https://www.kaggle.com/datasets/jessemostipak/hotel-booking-demand) "
-        "dataset with user-generated incident reports and manager notes.\n\n"
-        "**Core capabilities:**\n"
-        "- **Bookings** — browse and filter historical booking records with pagination\n"
-        "- **Incidents** — full CRUD for operational incident reports\n"
-        "- **Manager Notes** — internal annotations linked to bookings\n"
-        "- **Analytics** — cancellation rates, monthly demand trends, market segment performance\n"
-        "- **Insights** — rule-based cancellation risk scoring with risk bands, operational hotspot detection\n"
-        "- **AI Insights** — LLM-powered natural language risk assessments (OpenAI GPT integration)\n\n"
-        "**Security:** Dual authentication (API Key + JWT Bearer tokens) on all write endpoints. "
-        "Obtain a token via `POST /auth/token`.\n\n"
-        "**Production features:** CORS, rate limiting (60 req/min), structured logging, "
-        "health-check endpoint, MCP server compatibility\n\n"
-        "**Default dev API key:** `hotel-booking-dev-key-2025` — click **Authorize** above to set it.\n\n"
-        "Built for COMP3011 Web Services and Web Data — University of Leeds"
+        "dataset (119,390 records).\n\n"
+        "| Resource | Description |\n"
+        "| --- | --- |\n"
+        "| **Bookings** | Browse & filter with pagination |\n"
+        "| **Incidents** | CRUD for operational reports |\n"
+        "| **Notes** | Manager annotations per booking |\n"
+        "| **Analytics** | Cancellation rates, demand trends, segments |\n"
+        "| **Insights** | Rule-based risk scoring & hotspots |\n"
+        "| **AI Insights** | GPT-powered narrative risk assessments |\n\n"
+        "**Auth:** API Key or JWT Bearer — click **Authorize** and enter `hotel-booking-dev-key-2025`\n\n"
+        "**Extras:** [Live Dashboard](/dashboard) · "
+        "Rate limiting (60/min) · CORS · Health check · "
+        "[GitHub](https://github.com/9ali-oop/hotel-booking-api)\n\n"
+        "*COMP3011 Web Services — University of Leeds*"
     ),
     version="1.0.0",
     contact={
