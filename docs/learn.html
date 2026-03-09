@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hotel Booking API — Interactive Learning</title>
+<style>
+:root{--bg:#0f1117;--card:#1a1d27;--card2:#222536;--border:#2d3148;--text:#e2e4ed;--muted:#8b8fa3;--accent:#6c63ff;--accent2:#8b83ff;--green:#34d399;--red:#f87171;--orange:#fbbf24;--cyan:#22d3ee;--pink:#f472b6}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* Top bar */
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar h1{font-size:1.1rem;color:var(--accent2)}
+.topbar .stats{display:flex;gap:20px;font-size:.85rem;color:var(--muted)}
+.topbar .stats span{display:flex;align-items:center;gap:6px}
+.topbar .stats .val{color:var(--text);font-weight:700}
+
+/* Main layout */
+.app{display:flex;min-height:calc(100vh - 52px)}
+
+/* Sidebar */
+.sidebar{width:260px;background:var(--card);border-right:1px solid var(--border);padding:16px 0;overflow-y:auto;flex-shrink:0}
+.sidebar h3{padding:0 16px;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:16px 0 8px}
+.sidebar h3:first-child{margin-top:0}
+.sidebar .item{padding:10px 16px;cursor:pointer;font-size:.88rem;display:flex;align-items:center;gap:10px;transition:.15s;border-left:3px solid transparent}
+.sidebar .item:hover{background:rgba(108,99,255,.08);color:var(--accent2)}
+.sidebar .item.active{background:rgba(108,99,255,.12);color:var(--accent2);border-left-color:var(--accent)}
+.sidebar .item .icon{width:22px;text-align:center;font-size:.9rem}
+.sidebar .item .badge{margin-left:auto;background:var(--card2);padding:2px 8px;border-radius:10px;font-size:.7rem;color:var(--muted)}
+.sidebar .item .badge.done{background:rgba(52,211,153,.15);color:var(--green)}
+
+/* Content */
+.content{flex:1;padding:32px 40px;max-width:820px;overflow-y:auto}
+
+/* Welcome screen */
+.welcome{text-align:center;padding:80px 20px}
+.welcome h2{font-size:2rem;margin-bottom:12px}
+.welcome h2 span{color:var(--accent2)}
+.welcome p{color:var(--muted);max-width:500px;margin:0 auto 30px;line-height:1.6}
+.welcome .modes{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:500px;margin:0 auto}
+.welcome .mode-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:20px;cursor:pointer;transition:.2s;text-align:left}
+.welcome .mode-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.welcome .mode-card .mc-icon{font-size:1.5rem;margin-bottom:8px}
+.welcome .mode-card h4{margin-bottom:4px}
+.welcome .mode-card p{font-size:.82rem;color:var(--muted);margin:0}
+
+/* Challenge screen */
+.challenge{display:none}
+.challenge.active{display:block}
+.ch-header{margin-bottom:24px}
+.ch-header .ch-tag{display:inline-block;padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.ch-header .ch-tag.code{background:rgba(108,99,255,.15);color:var(--accent2)}
+.ch-header .ch-tag.concept{background:rgba(52,211,153,.15);color:var(--green)}
+.ch-header .ch-tag.debug{background:rgba(248,113,113,.15);color:var(--red)}
+.ch-header .ch-tag.explain{background:rgba(251,191,36,.15);color:var(--orange)}
+.ch-header .ch-tag.match{background:rgba(34,211,238,.15);color:var(--cyan)}
+.ch-header .ch-tag.arch{background:rgba(244,114,182,.15);color:var(--pink)}
+.ch-header h2{font-size:1.4rem;margin-bottom:6px}
+.ch-header p{color:var(--muted);font-size:.9rem}
+
+/* Code block */
+pre.code-block{background:#13151f;border:1px solid var(--border);border-radius:10px;padding:16px 20px;font-family:'Cascadia Code','Fira Code',monospace;font-size:.84rem;line-height:1.6;overflow-x:auto;margin:14px 0;white-space:pre}
+.blank{display:inline-block;min-width:120px;border-bottom:2px dashed var(--accent);color:var(--accent);padding:0 4px;cursor:pointer;transition:.2s}
+.blank:hover{background:rgba(108,99,255,.1)}
+.blank.filled{border-bottom-color:var(--green);color:var(--green);border-bottom-style:solid}
+.blank.wrong{border-bottom-color:var(--red);color:var(--red);border-bottom-style:solid}
+
+/* Options for fill-in-blank */
+.options{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.opt-btn{background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:.85rem;transition:.15s;font-family:'Cascadia Code','Fira Code',monospace}
+.opt-btn:hover{border-color:var(--accent);background:rgba(108,99,255,.1)}
+.opt-btn.used{opacity:.35;pointer-events:none}
+.opt-btn.correct-reveal{border-color:var(--green);background:rgba(52,211,153,.1);color:var(--green)}
+
+/* Multiple choice */
+.mc-options{display:flex;flex-direction:column;gap:10px;margin:16px 0}
+.mc-btn{background:var(--card2);border:1px solid var(--border);color:var(--text);padding:14px 18px;border-radius:10px;cursor:pointer;font-size:.9rem;text-align:left;transition:.15s;line-height:1.5}
+.mc-btn:hover{border-color:var(--accent)}
+.mc-btn.correct{border-color:var(--green);background:rgba(52,211,153,.1);color:var(--green)}
+.mc-btn.wrong{border-color:var(--red);background:rgba(248,113,113,.08);color:var(--red)}
+.mc-btn.reveal{border-color:var(--green);background:rgba(52,211,153,.06)}
+
+/* Text input (explain) */
+.explain-area{width:100%;min-height:120px;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;color:var(--text);font-family:inherit;font-size:.9rem;resize:vertical;line-height:1.6}
+.explain-area:focus{outline:none;border-color:var(--accent)}
+.explain-area::placeholder{color:var(--muted)}
+
+/* Ordering */
+.order-list{display:flex;flex-direction:column;gap:8px;margin:16px 0}
+.order-item{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;cursor:grab;display:flex;align-items:center;gap:12px;transition:.15s;user-select:none}
+.order-item:active{cursor:grabbing;border-color:var(--accent)}
+.order-item .oi-num{background:var(--card);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:var(--muted);flex-shrink:0}
+.order-item.correct-pos .oi-num{background:rgba(52,211,153,.2);color:var(--green)}
+.order-item.wrong-pos .oi-num{background:rgba(248,113,113,.2);color:var(--red)}
+.order-item .oi-arrows{margin-left:auto;display:flex;flex-direction:column;gap:2px}
+.order-item .oi-arrows button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:2px 6px;border-radius:4px}
+.order-item .oi-arrows button:hover{background:var(--card);color:var(--text)}
+
+/* Match pairs */
+.match-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.match-col h4{font-size:.75rem;text-transform:uppercase;color:var(--muted);margin-bottom:8px;letter-spacing:.05em}
+.match-item{background:var(--card2);border:2px solid var(--border);border-radius:10px;padding:12px 16px;cursor:pointer;font-size:.85rem;transition:.15s;margin-bottom:8px}
+.match-item:hover{border-color:var(--accent)}
+.match-item.selected{border-color:var(--accent);background:rgba(108,99,255,.1)}
+.match-item.matched{border-color:var(--green);background:rgba(52,211,153,.08);pointer-events:none}
+.match-item.wrong-flash{border-color:var(--red);background:rgba(248,113,113,.08)}
+
+/* Feedback */
+.feedback{margin:20px 0;padding:16px 20px;border-radius:10px;display:none;line-height:1.6;font-size:.9rem}
+.feedback.show{display:block}
+.feedback.correct{background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);color:var(--green)}
+.feedback.wrong{background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.2);color:var(--red)}
+.feedback.info{background:rgba(108,99,255,.08);border:1px solid rgba(108,99,255,.2);color:var(--accent2)}
+.feedback h4{margin-bottom:6px}
+
+/* Buttons */
+.btn{padding:10px 24px;border-radius:8px;border:none;cursor:pointer;font-size:.9rem;font-weight:600;transition:.15s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:var(--card2);border:1px solid var(--border);color:var(--text)}
+.btn-secondary:hover{border-color:var(--accent)}
+.btn-row{display:flex;gap:10px;margin-top:20px}
+
+/* Progress bar */
+.progress{height:4px;background:var(--card2);border-radius:2px;margin:8px 0;overflow:hidden}
+.progress .fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--cyan));border-radius:2px;transition:width .4s}
+
+/* Score display */
+.score-display{text-align:center;padding:40px 20px}
+.score-display .big-score{font-size:4rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.score-display p{color:var(--muted)}
+.score-display .score-breakdown{display:flex;justify-content:center;gap:30px;margin:24px 0}
+.score-display .sb-item{text-align:center}
+.score-display .sb-item .sb-val{font-size:1.5rem;font-weight:700}
+.score-display .sb-item .sb-label{font-size:.75rem;color:var(--muted)}
+
+@media(max-width:800px){
+  .sidebar{display:none}
+  .content{padding:20px}
+  .match-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Hotel Booking API — Learn & Test</h1>
+  <div class="stats">
+    <span>Score: <span class="val" id="scoreVal">0</span></span>
+    <span>Streak: <span class="val" id="streakVal">0</span></span>
+    <span>Progress: <span class="val" id="progressVal">0/0</span></span>
+  </div>
+</div>
+
+<div class="app">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="content" id="content"></div>
+</div>
+
+<script>
+// ============================================================
+// DATA — All challenges
+// ============================================================
+const CHALLENGES = [
+
+// ── SECTION: Architecture ──
+{
+  id:"arch-layers", section:"Architecture", type:"order",
+  tag:"arch", title:"Order the Architecture Layers",
+  desc:"Arrange these layers from top (client-facing) to bottom (storage). Think about which layer a request hits first.",
+  items:["HTTP Layer (FastAPI routers, CORS, rate limiting)","Authentication (API Key + JWT verification)","Schemas (Pydantic validation & serialisation)","Services (Risk scoring + LLM analysis)","ORM (SQLAlchemy models + relationships)","Database (SQLite — 119,390 records)"],
+  correct:[0,1,2,3,4,5],
+  explanation:"A request flows: HTTP → Auth → Schema validation → Service logic → ORM query → Database. Each layer has a single responsibility. Dependencies only flow downward."
+},
+{
+  id:"arch-di", section:"Architecture", type:"mc",
+  tag:"concept", title:"Dependency Injection",
+  desc:"What does FastAPI's Depends() do in this project?",
+  options:[
+    "Injects per-request database sessions and auth checks into route handlers, enabling test isolation via dependency_overrides",
+    "Automatically installs Python package dependencies from requirements.txt",
+    "Creates database tables when the app starts",
+    "Manages WebSocket connections between the dashboard and API"
+  ],
+  correct:0,
+  explanation:"Depends() is FastAPI's dependency injection system. Routes declare what they need — Depends(get_db) for a DB session, Depends(require_api_key) for auth. FastAPI resolves these at request time. For testing, dependency_overrides replaces get_db with an in-memory database version."
+},
+{
+  id:"arch-file", section:"Architecture", type:"match",
+  tag:"match", title:"Match Files to Responsibilities",
+  desc:"Connect each file to what it does in the project.",
+  left:["main.py","auth.py","database.py","schemas.py","risk_scoring.py","llm_analysis.py"],
+  right:["FastAPI app init, middleware, router registration","Dual auth (API key + JWT), constant-time comparison","SQLAlchemy engine, session factory, get_db()","Pydantic request/response models, validation rules","6-factor heuristic algorithm (0–1 score)","OpenAI API calls + template fallback"],
+  pairs:[[0,0],[1,1],[2,2],[3,3],[4,4],[5,5]]
+},
+
+// ── SECTION: Authentication ──
+{
+  id:"auth-fill", section:"Authentication", type:"fillin",
+  tag:"code", title:"Complete the Auth Check",
+  desc:"Fill in the blanks in the require_api_key dependency function.",
+  code:`async def require_api_key(
+    api_key: Optional[str] = Security(api_key_header),
+    bearer: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
+) -> str:
+    if api_key is not None:
+        if ___BLANK1___(api_key, API_KEY):
+            return "api_key_user"
+        raise HTTPException(status_code=___BLANK2___, detail="Invalid API key.")
+
+    if bearer is not None:
+        payload = ___BLANK3___(bearer.credentials)
+        return payload.get("sub", "jwt_user")
+
+    raise HTTPException(status_code=___BLANK4___, detail="Authentication required...")`,
+  blanks:{
+    BLANK1:{answer:"hmac.compare_digest",opts:["hmac.compare_digest","str.__eq__","bcrypt.verify","operator.eq"]},
+    BLANK2:{answer:"403",opts:["401","403","400","422"]},
+    BLANK3:{answer:"verify_jwt_token",opts:["verify_jwt_token","pyjwt.decode","jwt.verify","decode_token"]},
+    BLANK4:{answer:"401",opts:["401","403","400","404"]}
+  },
+  explanation:"hmac.compare_digest prevents timing attacks. 403 for invalid key (you identified yourself but wrong), 401 for missing auth (you didn't identify yourself at all). verify_jwt_token decodes and validates the JWT."
+},
+{
+  id:"auth-timing", section:"Authentication", type:"mc",
+  tag:"concept", title:"Why Constant-Time Comparison?",
+  desc:"Normal == comparison is vulnerable to timing attacks. Why?",
+  options:[
+    "It returns False at the first mismatched character, so comparing 'aaab' vs 'baaa' takes different amounts of time — attackers can guess the key character by character",
+    "It uses too much memory when comparing long strings",
+    "It doesn't work with Unicode characters in API keys",
+    "It sends the comparison result before finishing the full check"
+  ],
+  correct:0,
+  explanation:"String == short-circuits: it stops at the first different character. An attacker can measure response times to deduce which characters are correct, one at a time. hmac.compare_digest always compares ALL characters in constant time, leaking no information."
+},
+{
+  id:"auth-jwt-secret", section:"Authentication", type:"fillin",
+  tag:"code", title:"JWT Secret Derivation",
+  desc:"How is the JWT secret derived from the API key?",
+  code:`API_KEY = os.environ.get("API_KEY", "hotel-booking-dev-key-2025")
+
+# JWT secret derived from the API key:
+JWT_SECRET = ___BLANK1___(API_KEY.___BLANK2___()).___BLANK3___()
+JWT_ALGORITHM = "___BLANK4___"`,
+  blanks:{
+    BLANK1:{answer:"hashlib.sha256",opts:["hashlib.sha256","hashlib.md5","base64.encode","hmac.new"]},
+    BLANK2:{answer:"encode",opts:["encode","decode","strip","lower"]},
+    BLANK3:{answer:"hexdigest",opts:["hexdigest","digest","decode","toString"]},
+    BLANK4:{answer:"HS256",opts:["HS256","RS256","ES256","HS512"]}
+  },
+  explanation:"SHA-256 hash of the API key. This means changing the API key automatically invalidates all existing JWT tokens — the secret changes, so old signatures no longer verify. HS256 = HMAC-SHA256, a symmetric signing algorithm."
+},
+{
+  id:"auth-status", section:"Authentication", type:"match",
+  tag:"match", title:"Match Status Codes to Scenarios",
+  desc:"Connect each scenario to the correct HTTP status code.",
+  left:["No auth header provided","Invalid API key sent","Expired JWT token","Pydantic validation fails","Booking not found","Incident created successfully"],
+  right:["401 Unauthorized","403 Forbidden","401 Unauthorized","422 Unprocessable Entity","404 Not Found","201 Created"],
+  pairs:[[0,0],[1,1],[2,2],[3,3],[4,4],[5,5]]
+},
+
+// ── SECTION: Database ──
+{
+  id:"db-why-sqlite", section:"Database", type:"mc",
+  tag:"concept", title:"Why SQLite?",
+  desc:"What's the main reason SQLite was chosen over PostgreSQL?",
+  options:[
+    "Zero-config portability — clone and run with no database server install, ideal for examiner review. ORM means switching is a one-line change.",
+    "SQLite is faster than PostgreSQL for all workloads",
+    "PostgreSQL doesn't support Python",
+    "SQLite has better write concurrency for multi-user APIs"
+  ],
+  correct:0,
+  explanation:"SQLite is a file-based database — no server installation needed. The examiner can clone the repo and run immediately. The trade-off is limited write concurrency, but since this is a read-heavy API (119K records, mostly browsed), that's fine. The SQLAlchemy ORM means switching to PostgreSQL requires changing only the DATABASE_URL string."
+},
+{
+  id:"db-check-thread", section:"Database", type:"mc",
+  tag:"debug", title:"Debug: check_same_thread",
+  desc:'Why does the engine use connect_args={"check_same_thread": False}?',
+  options:[
+    "SQLite normally only allows the creating thread to use it, but FastAPI uses multiple async workers — this flag is needed for safe shared access",
+    "It enables multi-threaded write operations in SQLite",
+    "It's required for SQLAlchemy to work with any database",
+    "It prevents race conditions in the ORM layer"
+  ],
+  correct:0,
+  explanation:"SQLite's default is to restrict usage to the thread that created the connection. FastAPI's async event loop uses multiple workers, so we need to disable this check. SQLAlchemy's session management ensures safe access patterns despite this."
+},
+{
+  id:"db-models", section:"Database", type:"mc",
+  tag:"concept", title:"Model Relationships",
+  desc:'What does cascade="all, delete-orphan" mean on the Booking → Incident relationship?',
+  options:[
+    "If a booking is deleted, all its related incidents are automatically deleted too — no orphaned records",
+    "Incidents are automatically created when a booking is inserted",
+    "Bookings can only be deleted if they have no incidents",
+    "It creates a many-to-many relationship between bookings and incidents"
+  ],
+  correct:0,
+  explanation:"cascade='all, delete-orphan' means all lifecycle operations propagate: if you delete a Booking, SQLAlchemy automatically deletes all linked Incidents and ManagerNotes. 'delete-orphan' also removes an Incident if it's disassociated from its parent Booking."
+},
+
+// ── SECTION: Risk Scoring ──
+{
+  id:"risk-calc", section:"Risk Scoring", type:"mc",
+  tag:"concept", title:"Calculate a Risk Score",
+  desc:"A booking has: lead_time=350 days, previous_cancellations=0, deposit_type='No Deposit', market_segment='Online TA', is_repeated_guest=0, booking_changes=0. What's the risk score?",
+  options:[
+    "0.70 — very_high_lead_time (0.25) + no_deposit (0.15) + online_ta (0.10) + first_time (0.10) + no_changes (0.10)",
+    "0.55 — high_lead_time (0.15) + no_deposit (0.15) + online_ta (0.10) + first_time (0.10) + no_changes (0.05)",
+    "0.80 — all factors fire at maximum",
+    "0.45 — only lead time and deposit matter"
+  ],
+  correct:0,
+  explanation:"Lead time 350 > 300 → very_high_lead_time (+0.25). No previous cancellations → nothing. No Deposit → (+0.15). Online TA → (+0.10). First-time guest → (+0.10). Zero changes → (+0.10). Total: 0.25+0.15+0.10+0.10+0.10 = 0.70 → HIGH band."
+},
+{
+  id:"risk-why-heuristic", section:"Risk Scoring", type:"explain",
+  tag:"explain", title:"Explain: Why Not Machine Learning?",
+  desc:"The examiner asks: 'Why did you use a rule-based heuristic instead of training an ML model?' Write your answer below, then compare with the model answer.",
+  modelAnswer:"A rule-based heuristic is transparent and interpretable. I can explain exactly why a booking scored 0.65 — for example, very high lead time plus no deposit plus first-time guest. With an ML classifier, it's a black box — hard to explain in a viva why a specific prediction was made. The heuristic is also simpler to implement, test, and debug. I acknowledge ML as a future improvement in the report — a trained classifier would likely achieve better accuracy, but for this coursework, interpretability and explainability are more valuable."
+},
+{
+  id:"risk-bands", section:"Risk Scoring", type:"match",
+  tag:"match", title:"Match Risk Bands",
+  desc:"Connect each score range to its risk band and recommended action.",
+  left:["Score 0.0 – 0.29","Score 0.30 – 0.59","Score 0.60 – 1.0"],
+  right:["LOW — standard processing, minimal concern","MEDIUM — monitor, consider confirmation outreach","HIGH — proactive intervention, flag for review"],
+  pairs:[[0,0],[1,1],[2,2]]
+},
+
+// ── SECTION: AI / LLM ──
+{
+  id:"ai-pipeline", section:"AI Integration", type:"order",
+  tag:"arch", title:"Order the AI Assessment Pipeline",
+  desc:"Arrange the steps in the correct order for POST /insights/ai-risk-assessment/{id}.",
+  items:["Fetch booking from database by ID","Calculate heuristic risk score (6 factors)","Build structured prompt with booking data + score","Send to OpenAI Chat Completions API","Return combined structured + narrative response"],
+  correct:[0,1,2,3,4],
+  explanation:"The pipeline: Fetch → Score → Prompt → LLM call → Return. If the LLM call fails at step 4, the template fallback generates a schema-identical response instead."
+},
+{
+  id:"ai-fallback", section:"AI Integration", type:"mc",
+  tag:"debug", title:"What Happens Without an OpenAI Key?",
+  desc:"Someone calls POST /insights/ai-risk-assessment/1 but OPENAI_API_KEY is not configured. What happens?",
+  options:[
+    "200 OK — returns a template-based assessment with ai_source: 'template' and identical response schema. The API contract never breaks.",
+    "500 Internal Server Error — the OpenAI call throws an unhandled exception",
+    "503 Service Unavailable — the endpoint is disabled without a key",
+    "200 OK — but the ai_assessment field is empty"
+  ],
+  correct:0,
+  explanation:"This is graceful degradation. The _template_fallback() function generates a structured assessment using the risk factors. The response has ai_source: 'template' and ai_model: 'template-based (no LLM API key configured)'. The client gets a valid, useful response regardless."
+},
+{
+  id:"ai-temp", section:"AI Integration", type:"mc",
+  tag:"concept", title:"Why Temperature 0.3?",
+  desc:"The OpenAI API call uses temperature=0.3. What does this control and why this value?",
+  options:[
+    "Controls randomness — 0.3 is low, producing consistent factual responses suitable for risk assessments rather than creative writing",
+    "Controls the speed of the API response — lower is faster",
+    "Controls the maximum response length — 0.3 means 30% of max tokens",
+    "Controls the cost per token — lower temperature is cheaper"
+  ],
+  correct:0,
+  explanation:"Temperature controls output randomness. 0 = fully deterministic (same input → same output). 1 = highly creative/random. 0.3 gives slightly varied professional phrasing while staying factual and consistent — exactly what you want for risk assessments, not creative fiction."
+},
+{
+  id:"ai-async", section:"AI Integration", type:"mc",
+  tag:"concept", title:"Why httpx Not requests?",
+  desc:"The LLM service uses httpx.AsyncClient instead of the popular requests library. Why?",
+  options:[
+    "httpx is async-native — it won't block FastAPI's event loop while waiting for OpenAI (up to 30 seconds), so other requests can still be served",
+    "httpx is faster for all HTTP calls regardless of context",
+    "requests library doesn't support HTTPS",
+    "httpx automatically retries failed requests"
+  ],
+  correct:0,
+  explanation:"requests is synchronous — calling requests.post() blocks the entire event loop. If OpenAI takes 10 seconds to respond, no other request can be processed during that time. httpx.AsyncClient with 'await' releases the event loop while waiting, so FastAPI can handle other requests concurrently. This is non-blocking I/O."
+},
+{
+  id:"ai-post-not-get", section:"AI Integration", type:"explain",
+  tag:"explain", title:"Explain: Why POST Not GET?",
+  desc:"The examiner asks: 'Why is ai-risk-assessment a POST endpoint instead of GET?' Write your answer.",
+  modelAnswer:"The AI risk assessment has a side effect — it calls the OpenAI API, which costs money and consumes tokens on their billing system. GET should be safe and idempotent, meaning it shouldn't cause side effects. POST is semantically correct because each call triggers an external API request with a financial cost. It also lets us require authentication more naturally, since this is a premium feature. Additionally, POST results aren't cached by browsers or proxies, which is correct behaviour since each assessment could vary."
+},
+
+// ── SECTION: Endpoints ──
+{
+  id:"ep-crud", section:"Endpoints", type:"match",
+  tag:"match", title:"Match HTTP Verbs to Operations",
+  desc:"Connect each HTTP method to its semantic meaning in REST.",
+  left:["GET","POST","PUT","PATCH","DELETE"],
+  right:["Read / retrieve a resource (safe, idempotent)","Create a new resource","Full replacement of a resource (idempotent)","Partial update of a resource","Remove a resource"],
+  pairs:[[0,0],[1,1],[2,2],[3,3],[4,4]]
+},
+{
+  id:"ep-put-vs-patch", section:"Endpoints", type:"fillin",
+  tag:"code", title:"PUT vs PATCH — Spot the Difference",
+  desc:"Fill in the Pydantic schema fields. PUT requires ALL fields, PATCH makes them all optional.",
+  code:`# PUT schema — full replacement
+class IncidentUpdate(BaseModel):
+    incident_type: ___BLANK1___
+    severity: int
+    description: str
+    status: IncidentStatus
+
+# PATCH schema — partial update
+class IncidentPatch(BaseModel):
+    incident_type: ___BLANK2___ = None
+    severity: Optional[int] = None
+
+# In the PATCH handler:
+update_data = data.___BLANK3___(___BLANK4___)
+for field, value in update_data.items():
+    setattr(incident, field, value)`,
+  blanks:{
+    BLANK1:{answer:"IncidentType",opts:["IncidentType","Optional[IncidentType]","str","Any"]},
+    BLANK2:{answer:"Optional[IncidentType]",opts:["IncidentType","Optional[IncidentType]","str","None"]},
+    BLANK3:{answer:"model_dump",opts:["model_dump","dict","json","model_validate"]},
+    BLANK4:{answer:"exclude_unset=True",opts:["exclude_unset=True","exclude_none=True","include_all=True","by_alias=True"]}
+  },
+  explanation:"PUT requires every field (IncidentType, not Optional). PATCH wraps every field in Optional. The key: model_dump(exclude_unset=True) only includes fields the client actually sent in the request — so if they only send {status: 'resolved'}, only status gets updated."
+},
+{
+  id:"ep-pagination", section:"Endpoints", type:"mc",
+  tag:"concept", title:"Pagination Strategy",
+  desc:"How does the API paginate 119,390 booking records?",
+  options:[
+    "Offset/limit via query params: ?page=1&per_page=20 (max 100). SQLAlchemy runs query.offset((page-1)*per_page).limit(per_page)",
+    "Cursor-based pagination with a bookmark token",
+    "Returns all records and lets the client paginate in-browser",
+    "Uses a Redis cache to pre-paginate results"
+  ],
+  correct:0,
+  explanation:"Simple offset/limit pagination. per_page is capped at 100 (Query(20, ge=1, le=100)) to prevent abuse. The response includes total count so clients know how many pages exist. Trade-off: offset pagination gets slower on deep pages — cursor-based would be better for very large datasets."
+},
+
+// ── SECTION: Testing ──
+{
+  id:"test-isolation", section:"Testing", type:"fillin",
+  tag:"code", title:"Complete the Test Fixture",
+  desc:"Fill in the test database setup that enables isolation.",
+  code:`@pytest.fixture
+def db_session():
+    engine = create_engine("___BLANK1___")
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    yield session
+    session.close()
+
+@pytest.fixture
+def client(db_session):
+    def override_get_db():
+        yield db_session
+    app.___BLANK2___[___BLANK3___] = override_get_db
+    yield ___BLANK4___(app)
+    app.dependency_overrides.clear()`,
+  blanks:{
+    BLANK1:{answer:"sqlite:///:memory:",opts:["sqlite:///:memory:","sqlite:///test.db","postgresql://localhost/test","mysql://root@localhost"]},
+    BLANK2:{answer:"dependency_overrides",opts:["dependency_overrides","middleware","config","routes"]},
+    BLANK3:{answer:"get_db",opts:["get_db","SessionLocal","database","db_session"]},
+    BLANK4:{answer:"TestClient",opts:["TestClient","requests.Session","httpx.Client","FlaskClient"]}
+  },
+  explanation:"sqlite:///:memory: creates a fresh in-memory database — no disk, no leftover data. dependency_overrides replaces the real get_db with one that returns our test session. TestClient is FastAPI/Starlette's test client. Each test gets a clean, empty database that vanishes after."
+},
+{
+  id:"test-what-covered", section:"Testing", type:"mc",
+  tag:"concept", title:"What Do the 58 Tests Cover?",
+  desc:"Which of these is NOT tested in the current test suite?",
+  options:[
+    "End-to-end browser-based tests using the dashboard",
+    "Auth gate enforcement (401/403 on write endpoints without key)",
+    "Pydantic validation (422 on invalid severity, missing fields)",
+    "AI fallback (template response when no OpenAI key)"
+  ],
+  correct:0,
+  explanation:"There are no E2E browser-based tests — this is acknowledged as a limitation. The tests cover: auth gates (401/403), validation (422), CRUD lifecycles, FK integrity (can't create incident for non-existent booking), filter correctness, analytics calculations, and AI template fallback."
+},
+
+// ── SECTION: Deployment ──
+{
+  id:"deploy-railway", section:"Deployment", type:"order",
+  tag:"arch", title:"Order the Deployment Flow",
+  desc:"Arrange the Railway deployment steps in order.",
+  items:["Push code to main branch on GitHub","Railway detects push via webhook","Nixpacks auto-detects Python project","Dependencies installed from requirements.txt","Environment variables injected (API_KEY, OPENAI_API_KEY)","App starts: uvicorn run:app --host 0.0.0.0"],
+  correct:[0,1,2,3,4,5],
+  explanation:"Git push → webhook → auto-detect → build → inject env vars → run. HTTPS is automatic via Railway's reverse proxy. The health check endpoint lets Railway verify the app is alive."
+},
+{
+  id:"deploy-health", section:"Deployment", type:"mc",
+  tag:"concept", title:"Health Check Purpose",
+  desc:"What does the /health endpoint actually verify?",
+  options:[
+    "Database connectivity — it runs SELECT 1 against SQLite and reports connected/error status, plus the API version",
+    "Only that the Python process is running",
+    "That all 20+ endpoints are responding correctly",
+    "That the OpenAI API key is valid"
+  ],
+  correct:0,
+  explanation:"The health check does more than confirm the process is running — it actively probes the database with SELECT 1. If the DB connection fails, it reports the error. Railway (and monitoring tools) can ping this to detect issues beyond just 'is the process alive'."
+},
+
+// ── SECTION: Viva Practice ──
+{
+  id:"viva-what", section:"Viva Practice", type:"explain",
+  tag:"explain", title:'Examiner: "What does your API do?"',
+  desc:"You're in the viva. The examiner opens with this question. Give your 30-second elevator pitch.",
+  modelAnswer:"It's a RESTful intelligence layer over 119,000 real hotel booking records from Kaggle. Hotel managers can browse and filter bookings, log operational incidents with full CRUD, view analytics like cancellation rates and demand trends, and get AI-powered risk assessments that predict which bookings are likely to cancel with actionable recommendations. It's built with FastAPI, uses dual authentication with API keys and JWT tokens, has 58 automated tests, and is deployed live on Railway with CI via GitHub Actions."
+},
+{
+  id:"viva-genai", section:"Viva Practice", type:"explain",
+  tag:"explain", title:'Examiner: "How did you use GenAI?"',
+  desc:"The examiner wants to understand your use of Generative AI at three levels.",
+  modelAnswer:"Three levels. First, ChatGPT as a development tool — it helped scaffold the project structure, debug issues, and iterate on the architecture. Second, Prism for drafting the LaTeX technical report — I provided detailed context and it generated the document, which I reviewed and refined. Third, and most importantly, GPT-3.5-turbo is embedded as a runtime feature of the API itself — the AI risk assessment endpoint sends booking data to the LLM and returns natural language analysis with recommendations. That third level is the creative application — the API is AI-powered at runtime, not just built with AI tools."
+},
+{
+  id:"viva-limitations", section:"Viva Practice", type:"explain",
+  tag:"explain", title:'Examiner: "What are the limitations?"',
+  desc:"Every project has weaknesses. Show self-awareness and suggest improvements.",
+  modelAnswer:"SQLite limits write concurrency — in production I'd use PostgreSQL. There's no OAuth2 scopes or role-based access control — all authenticated users have the same permissions. The risk scoring heuristic is rule-based rather than ML-trained, so it's less accurate than a trained classifier but more interpretable. LLM calls are synchronous within a request — an async task queue like Celery would be better for long-running AI analysis. And there are no end-to-end browser-based tests, only unit and integration tests."
+},
+
+// ── SECTION: Middleware & Production ──
+{
+  id:"mw-stack", section:"Middleware", type:"order",
+  tag:"arch", title:"Order the Middleware Stack",
+  desc:"Arrange the middleware in the order a request passes through them.",
+  items:["CORS middleware (cross-origin request handling)","SlowAPI rate limiter (60 req/min per IP)","Custom request logger (method, path, status, latency)","Router handler (the actual endpoint logic)"],
+  correct:[0,1,2,3],
+  explanation:"Middleware forms an onion: CORS wraps everything (adds headers), then rate limiting checks the IP, then the logger records timing, then the actual route handler runs. The response flows back through in reverse order."
+},
+{
+  id:"mw-cors", section:"Middleware", type:"mc",
+  tag:"concept", title:"Why CORS?",
+  desc:'The API has allow_origins=["*"]. What does CORS do and why is this setting used?',
+  options:[
+    "CORS lets browsers make requests to a different origin than the page was served from. allow_origins=['*'] allows any origin — needed for the dashboard and external clients during development. In production you'd restrict this.",
+    "CORS encrypts all API responses for security",
+    "CORS compresses responses to reduce bandwidth",
+    "CORS prevents SQL injection attacks"
+  ],
+  correct:0,
+  explanation:"Cross-Origin Resource Sharing. Browsers block requests to different domains by default (Same-Origin Policy). The dashboard at /dashboard needs to call API endpoints — CORS headers tell the browser 'this is allowed'. allow_origins=['*'] is permissive for development; production would list specific allowed domains."
+}
+
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let score = 0, streak = 0, currentIdx = -1, answered = {};
+const sections = [...new Set(CHALLENGES.map(c=>c.section))];
+
+// ============================================================
+// RENDER SIDEBAR
+// ============================================================
+function renderSidebar(){
+  const sb = document.getElementById('sidebar');
+  let html = '';
+  sections.forEach(sec => {
+    const items = CHALLENGES.filter(c=>c.section===sec);
+    const done = items.filter(c=>answered[c.id]).length;
+    html += `<h3>${sec}</h3>`;
+    items.forEach((c,i) => {
+      const globalIdx = CHALLENGES.indexOf(c);
+      const isDone = answered[c.id];
+      const isActive = globalIdx === currentIdx;
+      html += `<div class="item${isActive?' active':''}${isDone?' done':''}" onclick="goTo(${globalIdx})">
+        <span class="icon">${typeIcon(c.type)}</span>
+        <span>${c.title}</span>
+        ${isDone?'<span class="badge done">✓</span>':''}
+      </div>`;
+    });
+  });
+  sb.innerHTML = html;
+}
+
+function typeIcon(t){
+  return {fillin:'</>',mc:'?',explain:'✎',order:'↕',match:'⇄'}[t]||'•';
+}
+
+// ============================================================
+// RENDER CONTENT
+// ============================================================
+function goTo(idx){
+  currentIdx = idx;
+  renderSidebar();
+  renderChallenge(CHALLENGES[idx]);
+  updateStats();
+}
+
+function showWelcome(){
+  currentIdx = -1;
+  renderSidebar();
+  const ct = document.getElementById('content');
+  const total = CHALLENGES.length;
+  const done = Object.keys(answered).length;
+  ct.innerHTML = `<div class="welcome">
+    <h2>Learn Your <span>API</span></h2>
+    <p>Interactive challenges covering every part of your Hotel Booking Intelligence API. Fill in code, explain to the examiner, order architecture layers, match concepts, and test yourself.</p>
+    <div class="progress"><div class="fill" style="width:${total?done/total*100:0}%"></div></div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:24px">${done}/${total} completed</p>
+    <div class="modes">
+      <div class="mode-card" onclick="goTo(0)"><div class="mc-icon">🚀</div><h4>Start from Beginning</h4><p>Work through all ${total} challenges in order</p></div>
+      <div class="mode-card" onclick="goToRandom()"><div class="mc-icon">🎲</div><h4>Random Challenge</h4><p>Jump to a random unsolved challenge</p></div>
+      <div class="mode-card" onclick="goToSection('Viva Practice')"><div class="mc-icon">🎤</div><h4>Viva Practice</h4><p>Practise answering examiner questions</p></div>
+      <div class="mode-card" onclick="goToSection('Authentication')"><div class="mc-icon">🔐</div><h4>Auth Deep-Dive</h4><p>Master the dual auth system</p></div>
+    </div>
+  </div>`;
+}
+
+function goToRandom(){
+  const unsolved = CHALLENGES.map((c,i)=>({c,i})).filter(x=>!answered[x.c.id]);
+  if(unsolved.length===0){goTo(0);return;}
+  const pick = unsolved[Math.floor(Math.random()*unsolved.length)];
+  goTo(pick.i);
+}
+function goToSection(sec){
+  const idx = CHALLENGES.findIndex(c=>c.section===sec);
+  if(idx>=0) goTo(idx);
+}
+
+function updateStats(){
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('streakVal').textContent = streak;
+  document.getElementById('progressVal').textContent = `${Object.keys(answered).length}/${CHALLENGES.length}`;
+}
+
+// ============================================================
+// RENDER CHALLENGE
+// ============================================================
+function renderChallenge(ch){
+  const ct = document.getElementById('content');
+  const tagClass = ch.tag||'concept';
+  let html = `<div class="challenge active">
+    <div class="ch-header">
+      <span class="ch-tag ${tagClass}">${tagClass}</span>
+      <h2>${ch.title}</h2>
+      <p>${ch.desc}</p>
+    </div>`;
+
+  if(ch.type==='mc') html += renderMC(ch);
+  else if(ch.type==='fillin') html += renderFillIn(ch);
+  else if(ch.type==='explain') html += renderExplain(ch);
+  else if(ch.type==='order') html += renderOrder(ch);
+  else if(ch.type==='match') html += renderMatch(ch);
+
+  html += `<div class="feedback" id="feedback"></div>`;
+  html += `<div class="btn-row">`;
+  if(currentIdx > 0) html += `<button class="btn btn-secondary" onclick="goTo(${currentIdx-1})">← Previous</button>`;
+  if(currentIdx < CHALLENGES.length-1) html += `<button class="btn btn-secondary" onclick="goTo(${currentIdx+1})">Next →</button>`;
+  html += `<button class="btn btn-secondary" onclick="showWelcome()" style="margin-left:auto">Home</button>`;
+  html += `</div></div>`;
+
+  ct.innerHTML = html;
+}
+
+// ── Multiple Choice ──
+function renderMC(ch){
+  let html = '<div class="mc-options">';
+  ch.options.forEach((opt,i) => {
+    html += `<div class="mc-btn" id="mc-${i}" onclick="checkMC(${i},${ch.correct},'${ch.id}')">${opt}</div>`;
+  });
+  html += '</div>';
+  return html;
+}
+function checkMC(picked, correct, id){
+  if(answered[id]) return;
+  const isRight = picked === correct;
+  document.getElementById(`mc-${picked}`).classList.add(isRight?'correct':'wrong');
+  if(!isRight) document.getElementById(`mc-${correct}`).classList.add('reveal');
+  showFeedback(isRight, CHALLENGES.find(c=>c.id===id).explanation);
+  recordAnswer(id, isRight);
+}
+
+// ── Fill in the Blank ──
+function renderFillIn(ch){
+  let codeHtml = ch.code;
+  const blankKeys = Object.keys(ch.blanks);
+  blankKeys.forEach(k => {
+    codeHtml = codeHtml.replace(`___${k}___`, `<span class="blank" id="blank-${k}" onclick="selectBlank('${k}')">${k.replace('BLANK','_____')}</span>`);
+  });
+
+  let html = `<pre class="code-block">${codeHtml}</pre>`;
+  html += `<div id="fillin-opts"></div>`;
+  html += `<button class="btn btn-primary" style="margin-top:12px" onclick="checkFillIn('${ch.id}')">Check Answers</button>`;
+
+  // Store blank data
+  setTimeout(() => {
+    window._fillBlanks = ch.blanks;
+    window._fillSelected = null;
+    window._fillAnswers = {};
+    selectBlank(blankKeys[0]);
+  }, 50);
+
+  return html;
+}
+function selectBlank(key){
+  window._fillSelected = key;
+  document.querySelectorAll('.blank').forEach(b => b.style.outline = 'none');
+  const el = document.getElementById(`blank-${key}`);
+  if(el) el.style.outline = '2px solid var(--accent)';
+  // Show options for this blank
+  const blank = window._fillBlanks[key];
+  const optsDiv = document.getElementById('fillin-opts');
+  if(!optsDiv) return;
+  let html = `<p style="font-size:.8rem;color:var(--muted);margin-bottom:8px">Choose for <strong style="color:var(--accent)">${key}</strong>:</p><div class="options">`;
+  blank.opts.forEach(opt => {
+    const used = Object.values(window._fillAnswers||{}).includes(opt) && window._fillAnswers[key]!==opt;
+    html += `<button class="opt-btn${used?' used':''}" onclick="pickOption('${key}','${opt.replace(/'/g,"\\'")}')">${opt}</button>`;
+  });
+  html += '</div>';
+  optsDiv.innerHTML = html;
+}
+function pickOption(key, val){
+  window._fillAnswers = window._fillAnswers||{};
+  window._fillAnswers[key] = val;
+  const el = document.getElementById(`blank-${key}`);
+  if(el){el.textContent = val; el.classList.add('filled'); el.classList.remove('wrong');}
+  // Move to next blank
+  const keys = Object.keys(window._fillBlanks);
+  const nextIdx = keys.indexOf(key) + 1;
+  if(nextIdx < keys.length) selectBlank(keys[nextIdx]);
+  else selectBlank(key);
+}
+function checkFillIn(id){
+  if(answered[id]) return;
+  const blanks = window._fillBlanks;
+  const answers = window._fillAnswers||{};
+  let allCorrect = true;
+  Object.keys(blanks).forEach(k => {
+    const el = document.getElementById(`blank-${k}`);
+    if(answers[k] === blanks[k].answer){
+      el.classList.add('filled'); el.classList.remove('wrong');
+    } else {
+      el.classList.add('wrong'); el.classList.remove('filled');
+      el.textContent = blanks[k].answer;
+      allCorrect = false;
+    }
+  });
+  showFeedback(allCorrect, CHALLENGES.find(c=>c.id===id).explanation);
+  recordAnswer(id, allCorrect);
+}
+
+// ── Explain ──
+function renderExplain(ch){
+  let html = `<textarea class="explain-area" id="explain-input" placeholder="Type your answer here... try to answer as if you're speaking to the examiner."></textarea>`;
+  html += `<div class="btn-row"><button class="btn btn-primary" onclick="showModelAnswer('${ch.id}')">Show Model Answer</button></div>`;
+  return html;
+}
+function showModelAnswer(id){
+  const ch = CHALLENGES.find(c=>c.id===id);
+  const fb = document.getElementById('feedback');
+  const userText = document.getElementById('explain-input').value.trim();
+  fb.className = 'feedback show info';
+  fb.innerHTML = `<h4>Model Answer:</h4><p>${ch.modelAnswer}</p>${userText?`<hr style="border-color:var(--border);margin:12px 0"><h4>Your answer:</h4><p style="color:var(--muted)">${userText}</p><p style="margin-top:8px;font-size:.85rem">Compare the key points — did you mention the main concepts?</p>`:''}`;
+  if(!answered[id]) recordAnswer(id, true); // Explain challenges always count as done
+}
+
+// ── Order ──
+function renderOrder(ch){
+  // Shuffle items
+  const indices = ch.items.map((_,i)=>i);
+  for(let i=indices.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[indices[i],indices[j]]=[indices[j],indices[i]];}
+  window._orderItems = indices.map(i=>({text:ch.items[i],origIdx:i}));
+
+  let html = `<div class="order-list" id="order-list">`;
+  window._orderItems.forEach((_,i) => {
+    html += renderOrderItem(i);
+  });
+  html += `</div>`;
+  html += `<button class="btn btn-primary" style="margin-top:12px" onclick="checkOrder('${ch.id}')">Check Order</button>`;
+  return html;
+}
+function renderOrderItem(i){
+  const item = window._orderItems[i];
+  return `<div class="order-item" id="oi-${i}">
+    <span class="oi-num">${i+1}</span>
+    <span>${item.text}</span>
+    <span class="oi-arrows">
+      <button onclick="moveOrder(${i},-1)">▲</button>
+      <button onclick="moveOrder(${i},1)">▼</button>
+    </span>
+  </div>`;
+}
+function moveOrder(idx, dir){
+  const newIdx = idx + dir;
+  if(newIdx < 0 || newIdx >= window._orderItems.length) return;
+  [window._orderItems[idx], window._orderItems[newIdx]] = [window._orderItems[newIdx], window._orderItems[idx]];
+  const list = document.getElementById('order-list');
+  let html = '';
+  window._orderItems.forEach((_,i) => { html += renderOrderItem(i); });
+  list.innerHTML = html;
+}
+function checkOrder(id){
+  if(answered[id]) return;
+  const ch = CHALLENGES.find(c=>c.id===id);
+  let allCorrect = true;
+  window._orderItems.forEach((item,i) => {
+    const el = document.getElementById(`oi-${i}`);
+    if(item.origIdx === ch.correct[i]){
+      el.classList.add('correct-pos');
+    } else {
+      el.classList.add('wrong-pos');
+      allCorrect = false;
+    }
+  });
+  showFeedback(allCorrect, ch.explanation);
+  recordAnswer(id, allCorrect);
+}
+
+// ── Match ──
+function renderMatch(ch){
+  window._matchPairs = ch.pairs;
+  window._matchState = {selected:null, matched:[], leftItems:[...ch.left], rightItems:[]};
+  // Shuffle right side
+  const rIndices = ch.right.map((_,i)=>i);
+  for(let i=rIndices.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[rIndices[i],rIndices[j]]=[rIndices[j],rIndices[i]];}
+  window._matchRightOrder = rIndices;
+  window._matchState.rightItems = rIndices.map(i=>ch.right[i]);
+
+  let html = `<div class="match-grid">
+    <div class="match-col"><h4>Items</h4>`;
+  ch.left.forEach((item,i) => {
+    html += `<div class="match-item" id="ml-${i}" onclick="matchClick('left',${i})">${item}</div>`;
+  });
+  html += `</div><div class="match-col"><h4>Descriptions</h4>`;
+  window._matchState.rightItems.forEach((item,i) => {
+    html += `<div class="match-item" id="mr-${i}" onclick="matchClick('right',${i})">${item}</div>`;
+  });
+  html += `</div></div>`;
+  return html;
+}
+function matchClick(side, idx){
+  const st = window._matchState;
+  const ch = CHALLENGES[currentIdx];
+
+  if(st.matched.includes(`${side}-${idx}`)) return;
+
+  if(!st.selected){
+    st.selected = {side, idx};
+    document.getElementById(`m${side[0]}-${idx}`).classList.add('selected');
+  } else if(st.selected.side === side){
+    document.getElementById(`m${st.selected.side[0]}-${st.selected.idx}`).classList.remove('selected');
+    st.selected = {side, idx};
+    document.getElementById(`m${side[0]}-${idx}`).classList.add('selected');
+  } else {
+    // Check match
+    const leftIdx = side==='left' ? idx : st.selected.idx;
+    const rightDisplayIdx = side==='right' ? idx : st.selected.idx;
+    const rightOrigIdx = window._matchRightOrder[rightDisplayIdx];
+
+    const isMatch = ch.pairs.some(p => p[0]===leftIdx && p[1]===rightOrigIdx);
+
+    document.getElementById(`m${st.selected.side[0]}-${st.selected.idx}`).classList.remove('selected');
+
+    if(isMatch){
+      document.getElementById(`ml-${leftIdx}`).classList.add('matched');
+      document.getElementById(`mr-${rightDisplayIdx}`).classList.add('matched');
+      st.matched.push(`left-${leftIdx}`, `right-${rightDisplayIdx}`);
+
+      if(st.matched.length === ch.left.length * 2){
+        showFeedback(true, ch.explanation || "All pairs matched correctly!");
+        recordAnswer(ch.id, true);
+      }
+    } else {
+      const el1 = document.getElementById(`ml-${leftIdx}`);
+      const el2 = document.getElementById(`mr-${rightDisplayIdx}`);
+      el1.classList.add('wrong-flash');
+      el2.classList.add('wrong-flash');
+      setTimeout(()=>{el1.classList.remove('wrong-flash');el2.classList.remove('wrong-flash');},600);
+      streak = 0; updateStats();
+    }
+    st.selected = null;
+  }
+}
+
+// ============================================================
+// FEEDBACK & SCORING
+// ============================================================
+function showFeedback(isCorrect, explanation){
+  const fb = document.getElementById('feedback');
+  fb.className = `feedback show ${isCorrect?'correct':'wrong'}`;
+  fb.innerHTML = `<h4>${isCorrect?'Correct!':'Not quite — here\'s the explanation:'}</h4><p>${explanation}</p>`;
+}
+function recordAnswer(id, isCorrect){
+  if(answered[id]) return;
+  answered[id] = isCorrect;
+  if(isCorrect){score += 10; streak++;}
+  else{streak = 0;}
+  updateStats();
+  renderSidebar();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+showWelcome();
+updateStats();
+</script>
+</body>
+</html>

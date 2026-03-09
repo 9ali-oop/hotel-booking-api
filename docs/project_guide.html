@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hotel Booking Intelligence API — Full Project Guide</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<style>
+  :root{--bg:#0d1117;--card:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;--green:#3fb950;--orange:#d29922;--red:#f85149;--purple:#bc8cff}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:0 0 80px}
+
+  /* Hero */
+  .hero{background:linear-gradient(135deg,#1a1e2e 0%,#0d1117 50%,#161b22 100%);padding:60px 40px;text-align:center;border-bottom:1px solid var(--border)}
+  .hero h1{font-size:2.4rem;margin-bottom:8px}
+  .hero h1 span{color:var(--accent)}
+  .hero p{color:var(--muted);font-size:1.1rem;max-width:700px;margin:0 auto 20px}
+  .hero-links{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .hero-links a{background:var(--card);border:1px solid var(--border);color:var(--accent);padding:8px 18px;border-radius:8px;text-decoration:none;font-size:.9rem;transition:.2s}
+  .hero-links a:hover{background:var(--accent);color:#000}
+
+  /* Nav */
+  .nav{position:sticky;top:0;z-index:100;background:rgba(13,17,23,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:10px 20px;overflow-x:auto;white-space:nowrap}
+  .nav a{color:var(--muted);text-decoration:none;margin-right:20px;font-size:.85rem;transition:.2s}
+  .nav a:hover,.nav a.active{color:var(--accent)}
+
+  /* Container */
+  .container{max-width:960px;margin:0 auto;padding:0 20px}
+
+  /* Section */
+  .section{margin-top:40px}
+  .section-header{display:flex;align-items:center;gap:12px;cursor:pointer;padding:16px 20px;background:var(--card);border:1px solid var(--border);border-radius:12px 12px 0 0;user-select:none;transition:.2s}
+  .section-header:hover{border-color:var(--accent)}
+  .section-header.collapsed{border-radius:12px}
+  .section-header .num{background:var(--accent);color:#000;font-weight:700;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0}
+  .section-header h2{font-size:1.3rem;flex:1}
+  .section-header .arrow{color:var(--muted);font-size:1.2rem;transition:transform .3s}
+  .section-header.collapsed .arrow{transform:rotate(-90deg)}
+  .section-body{background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;padding:24px;display:block}
+  .section-body.hidden{display:none}
+
+  /* Typography inside sections */
+  .section-body h3{color:var(--accent);margin:24px 0 8px;font-size:1.1rem}
+  .section-body h3:first-child{margin-top:0}
+  .section-body p{margin-bottom:14px;color:var(--text)}
+  .section-body ul,.section-body ol{margin:0 0 14px 20px}
+  .section-body li{margin-bottom:6px}
+  .section-body strong{color:var(--green)}
+
+  /* Code */
+  pre{border-radius:8px;margin:12px 0 16px;overflow-x:auto;font-size:.85rem}
+  code.inline{background:#1c2128;padding:2px 7px;border-radius:4px;font-size:.88em;color:var(--orange)}
+
+  /* Callout boxes */
+  .callout{border-left:4px solid var(--accent);background:rgba(88,166,255,.08);padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+  .callout.why{border-left-color:var(--green);background:rgba(63,185,80,.08)}
+  .callout.warn{border-left-color:var(--orange);background:rgba(210,153,34,.08)}
+  .callout.exam{border-left-color:var(--purple);background:rgba(188,140,255,.08)}
+  .callout strong{display:block;margin-bottom:4px}
+
+  /* Diagram */
+  .diagram{background:#1c2128;border:1px solid var(--border);border-radius:8px;padding:20px;margin:14px 0;font-family:'Courier New',monospace;font-size:.85rem;line-height:1.5;overflow-x:auto;white-space:pre;color:var(--muted)}
+  .diagram .highlight{color:var(--accent);font-weight:bold}
+  .diagram .green{color:var(--green)}
+  .diagram .orange{color:var(--orange)}
+  .diagram .red{color:var(--red)}
+
+  /* Table */
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.9rem}
+  th{background:var(--bg);text-align:left;padding:10px 12px;border-bottom:2px solid var(--border);color:var(--accent)}
+  td{padding:8px 12px;border-bottom:1px solid var(--border)}
+  tr:hover td{background:rgba(88,166,255,.04)}
+
+  /* Quiz */
+  .quiz{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;margin:16px 0}
+  .quiz h4{color:var(--purple);margin-bottom:10px}
+  .quiz button{background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:6px;cursor:pointer;margin:4px;transition:.2s;font-size:.85rem}
+  .quiz button:hover{border-color:var(--accent)}
+  .quiz button.correct{background:rgba(63,185,80,.2);border-color:var(--green);color:var(--green)}
+  .quiz button.wrong{background:rgba(248,81,73,.15);border-color:var(--red);color:var(--red)}
+  .quiz .answer{margin-top:10px;padding:10px;border-radius:6px;display:none;font-size:.9rem}
+
+  /* Tag */
+  .tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:600;margin:0 4px}
+  .tag.get{background:rgba(63,185,80,.15);color:var(--green)}
+  .tag.post{background:rgba(88,166,255,.15);color:var(--accent)}
+  .tag.put{background:rgba(210,153,34,.15);color:var(--orange)}
+  .tag.patch{background:rgba(188,140,255,.15);color:var(--purple)}
+  .tag.delete{background:rgba(248,81,73,.15);color:var(--red)}
+
+  @media(max-width:700px){
+    .hero{padding:30px 20px}
+    .hero h1{font-size:1.6rem}
+    .section-body{padding:16px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================== HERO ============================== -->
+<div class="hero">
+  <h1>Hotel Booking <span>Intelligence API</span></h1>
+  <p>Complete project guide for COMP3011 — everything you need to understand and explain in the oral exam.</p>
+  <div class="hero-links">
+    <a href="https://web-production-c9799.up.railway.app/" target="_blank">Live API</a>
+    <a href="https://web-production-c9799.up.railway.app/docs" target="_blank">Swagger Docs</a>
+    <a href="https://web-production-c9799.up.railway.app/dashboard" target="_blank">Dashboard</a>
+    <a href="https://github.com/9ali-oop/hotel-booking-api" target="_blank">GitHub</a>
+  </div>
+</div>
+
+<!-- ============================== NAV ============================== -->
+<div class="nav" id="nav">
+  <a href="#s1">Big Picture</a>
+  <a href="#s2">Tech Stack</a>
+  <a href="#s3">Architecture</a>
+  <a href="#s4">Database</a>
+  <a href="#s5">Auth</a>
+  <a href="#s6">Endpoints</a>
+  <a href="#s7">Risk Scoring</a>
+  <a href="#s8">AI / LLM</a>
+  <a href="#s9">Dashboard</a>
+  <a href="#s10">Testing</a>
+  <a href="#s11">Deployment</a>
+  <a href="#s12">Viva Prep</a>
+</div>
+
+<div class="container">
+
+<!-- ================================================================ -->
+<!-- 1. BIG PICTURE                                                   -->
+<!-- ================================================================ -->
+<div class="section" id="s1">
+  <div class="section-header" onclick="toggle(this)">
+    <span class="num">1</span>
+    <h2>The Big Picture — What Did You Build?</h2>
+    <span class="arrow">▼</span>
+  </div>
+  <div class="section-body">
+    <p>You built a <strong>RESTful Web API</strong> that sits on top of the <a href="https://www.kaggle.com/datasets/jessemostipak/hotel-booking-demand" style="color:var(--accent)">Hotel Booking Demand dataset</a> from Kaggle. The dataset contains <strong>119,390 real hotel booking records</strong> from two Portuguese hotels (a city hotel and a resort hotel), covering 2015–2017. Each record has 32 features — lead time, country, market segment, deposit type, cancellation status, etc.</p>
+
+    <h3>What the API does (in plain English)</h3>
+    <p>Imagine you're a hotel manager. This API lets you:</p>
+    <ol>
+      <li><strong>Browse bookings</strong> — search, filter by hotel/country/month, paginate through 119K records</li>
+      <li><strong>Log incidents</strong> — record operational issues (complaints, overbookings, no-shows) against bookings. Full Create, Read, Update, Delete.</li>
+      <li><strong>Attach notes</strong> — managers write internal notes on any booking. Another CRUD resource.</li>
+      <li><strong>View analytics</strong> — cancellation rates, monthly demand trends, market segment performance. These run SQL aggregations behind the scenes.</li>
+      <li><strong>Get risk insights</strong> — a rule-based algorithm scores each booking's cancellation risk (0–1). You can fetch the highest-risk bookings.</li>
+      <li><strong>AI risk assessments</strong> — send a booking to OpenAI's GPT, which writes a natural-language analysis with recommendations. This is the "creative GenAI" feature.</li>
+    </ol>
+
+    <div class="callout exam">
+      <strong>Exam tip:</strong> When they ask "what does your API do?", lead with the <em>business problem</em> (hotel cancellation management), not the technology. Then layer in: "it's RESTful, uses FastAPI, has dual auth, AI integration, and a live dashboard."
+    </div>
+
+    <h3>The Dataset</h3>
+    <p>Antonio et al. (2019) published this dataset. Key stats: 119,390 records, 32 columns, two hotels (Resort Hotel + City Hotel), date range 2015–2017. The <code class="inline">is_canceled</code> column is binary (0/1) — about 37% of bookings were cancelled. This high cancellation rate is what makes the risk-scoring feature meaningful.</p>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 2. TECH STACK                                                    -->
+<!-- ================================================================ -->
+<div class="section" id="s2">
+  <div class="section-header" onclick="toggle(this)">
+    <span class="num">2</span>
+    <h2>Technology Stack — What and Why</h2>
+    <span class="arrow">▼</span>
+  </div>
+  <div class="section-body">
+    <table>
+      <tr><th>Technology</th><th>Role</th><th>Why this one?</th></tr>
+      <tr><td><strong>FastAPI</strong></td><td>Web framework</td><td>Auto-generates Swagger docs from type hints. Pydantic v2 validation. Async-native. Faster than Flask for API work.</td></tr>
+      <tr><td><strong>SQLAlchemy 2.0</strong></td><td>ORM</td><td>Database-agnostic (swap SQLite→PostgreSQL by changing one URL). Migration-ready. Industry standard Python ORM.</td></tr>
+      <tr><td><strong>SQLite</strong></td><td>Database</td><td>Zero-config (no DB server install). Read-heavy workload is a good fit. Trade-off: limited write concurrency.</td></tr>
+      <tr><td><strong>Pydantic v2</strong></td><td>Validation/serialisation</td><td>Validates every request body automatically. Generates JSON schemas for docs. Type-safe.</td></tr>
+      <tr><td><strong>PyJWT</strong></td><td>JWT tokens</td><td>Lightweight. Implements RFC 7519. No heavy crypto dependencies.</td></tr>
+      <tr><td><strong>slowapi</strong></td><td>Rate limiting</td><td>60 requests/minute per IP. Prevents abuse. OWASP recommended.</td></tr>
+      <tr><td><strong>httpx</strong></td><td>Async HTTP client</td><td>Non-blocking calls to OpenAI. Works inside async FastAPI handlers.</td></tr>
+      <tr><td><strong>pytest</strong></td><td>Testing</td><td>Industry standard. Fixtures for test isolation. Fast with in-memory SQLite.</td></tr>
+      <tr><td><strong>GitHub Actions</strong></td><td>CI/CD</td><td>Runs tests on push/PR. Matrix across Python 3.10, 3.11, 3.12.</td></tr>
+      <tr><td><strong>Railway</strong></td><td>Hosting</td><td>Git-based auto-deploy. Free HTTPS. Env var injection. Zero Docker config (Nixpacks).</td></tr>
+    </table>
+
+    <div class="callout why">
+      <strong>Design choice to explain:</strong> "Why SQLite instead of PostgreSQL?" — SQLite is zero-config (the examiner can clone and run immediately), it's ideal for read-heavy workloads like browsing 119K records, and the ORM abstraction means switching to PostgreSQL is a one-line change. The trade-off is write concurrency, which isn't an issue for a single-writer API.
+    </div>
+
+    <div class="callout why">
+      <strong>Design choice to explain:</strong> "Why FastAPI over Flask?" — FastAPI gives us automatic interactive documentation (Swagger UI) from Python type hints, built-in request validation via Pydantic, and native async support for non-blocking LLM calls. Flask would require additional extensions for each of these.
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 3. ARCHITECTURE                                                  -->
+<!-- ================================================================ -->
+<div class="section" id="s3">
+  <div class="section-header" onclick="toggle(this)">
+    <span class="num">3</span>
+    <h2>System Architecture — How It All Fits Together</h2>
+    <span class="arrow">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>Layered Architecture</h3>
+    <p>The project follows a <strong>layered architecture pattern</strong>. Each layer has a single responsibility, and dependencies only flow downward. This means you can test each layer independently.</p>
+
+    <div class="diagram">┌─────────────────────────────────────────────────────┐
+│  <span class="highlight">CLIENT</span>  (browser, curl, Swagger UI, dashboard)       │
+└──────────────────────┬──────────────────────────────┘
+                       │ HTTP Request
+                       ▼
+┌─────────────────────────────────────────────────────┐
+│  <span class="highlight">MIDDLEWARE LAYER</span>                                     │
+│  ├── CORS (allow cross-origin requests)              │
+│  ├── Rate Limiter (60 req/min via slowapi)           │
+│  └── Request Logger (method, path, status, latency)  │
+└──────────────────────┬──────────────────────────────┘
+                       ▼
+┌─────────────────────────────────────────────────────┐
+│  <span class="highlight">ROUTER LAYER</span>  (app/routers/)                        │
+│  ├── bookings.py    — GET (browse/filter)            │
+│  ├── incidents.py   — full CRUD                      │
+│  ├── notes.py       — CRUD                           │
+│  ├── analytics.py   — aggregation queries            │
+│  ├── insights.py    — risk scoring endpoints         │
+│  ├── ai_insights.py — LLM-powered analysis           │
+│  └── auth_router.py — token issuance                 │
+└──────────────────────┬──────────────────────────────┘
+                       ▼
+┌─────────────────────────────────────────────────────┐
+│  <span class="highlight">AUTH LAYER</span>  (app/auth.py)                            │
+│  ├── API Key check (X-API-Key header)                │
+│  ├── JWT Bearer check (Authorization header)         │
+│  └── FastAPI Depends() injection                     │
+└──────────────────────┬──────────────────────────────┘
+                       ▼
+┌─────────────────────────────────────────────────────┐
+│  <span class="highlight">SCHEMA LAYER</span>  (app/schemas.py)                       │
+│  Pydantic models validate input + serialise output   │
+└──────────────────────┬──────────────────────────────┘
+                       ▼
+┌─────────────────────────────────────────────────────┐
+│  <span class="highlight">SERVICE LAYER</span>  (app/services/)                       │
+│  ├── risk_scoring.py  — heuristic algorithm          │
+│  └── llm_analysis.py  — OpenAI API integration       │
+└──────────────────────┬──────────────────────────────┘
+                       ▼
+┌─────────────────────────────────────────────────────┐
+│  <span class="highlight">ORM LAYER</span>  (app/models.py + app/database.py)         │
+│  SQLAlchemy models → SQL queries → SQLite            │
+└─────────────────────────────────────────────────────┘</div>
+
+    <h3>Key architectural pattern: Dependency Injection</h3>
+    <p>FastAPI's <code class="inline">Depends()</code> is the backbone. Every route that needs database access gets a fresh session via <code class="inline">Depends(get_db)</code>. Every route that needs auth gets it via <code class="inline">Depends(require_api_key)</code>. This is how you get:</p>
+    <ul>
+      <li><strong>Per-request DB sessions</strong> — each request gets its own session, no shared state, proper cleanup</li>
+      <li><strong>Test isolation</strong> — tests override <code class="inline">get_db</code> to use an in-memory SQLite database</li>
+      <li><strong>Separation of concerns</strong> — routes don't know how auth works, they just declare they need it</li>
+    </ul>
+
+<pre><code class="language-python"># How Depends() works — from database.py
+def get_db():
+    """Yields a DB session, closes it after the request."""
+    db = SessionLocal()
+    try:
+        yield db        # Route gets this session
+    finally:
+        db.close()      # Always cleaned up, even on errors
+
+# Used in routes like this:
+@router.get("/bookings")
+def list_bookings(db: Session = Depends(get_db)):
+    return db.query(Booking).all()
+</code></pre>
+
+    <h3>File structure</h3>
+    <div class="diagram">hotel-booking-api/
+├── app/
+│   ├── <span class="highlight">main.py</span>           ← FastAPI app, middleware, router registration
+│   ├── <span class="highlight">auth.py</span>           ← Dual auth (API key + JWT)
+│   ├── <span class="highlight">database.py</span>       ← SQLAlchemy engine + session factory
+│   ├── <span class="highlight">models.py</span>         ← 3 ORM models (Booking, Incident, ManagerNote)
+│   ├── <span class="highlight">schemas.py</span>        ← Pydantic request/response schemas
+│   ├── routers/
+│   │   ├── bookings.py     ← GET bookings with filters
+│   │   ├── incidents.py    ← Full CRUD
+│   │   ├── notes.py        ← CRUD
+│   │   ├── analytics.py    ← Aggregation endpoints
+│   │   ├── insights.py     ← Risk scoring endpoints
+│   │   ├── ai_insights.py  ← GPT-powered analysis
+│   │   └── auth_router.py  ← POST /auth/token
+│   └── services/
+│       ├── <span class="green">risk_scoring.py</span> ← Heuristic algorithm (6 factors)
+│       └── <span class="green">llm_analysis.py</span> ← OpenAI API + fallback
+├── static/
+│   └── index.html          ← Dashboard (Chart.js)
+├── tests/                  ← 58 tests across 6 files
+├── import_data.py          ← CSV → SQLite import script
+├── requirements.txt
+└── .github/workflows/      ← CI pipeline</div>
+
+    <div class="callout exam">
+      <strong>Exam tip:</strong> If asked "why layered architecture?", say: separation of concerns (each layer has one job), independent testability (you can test auth without touching the DB), and the Open/Closed Principle — adding a new router doesn't require modifying existing ones.
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 4. DATABASE                                                      -->
+<!-- ================================================================ -->
+<div class="section" id="s4">
+  <div class="section-header" onclick="toggle(this)">
+    <span class="num">4</span>
+    <h2>Database Design</h2>
+    <span class="arrow">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>Three tables, two relationships</h3>
+    <div class="diagram">┌──────────────────────────────┐
+│ <span class="highlight">bookings</span> (119,390 rows)       │
+│ PK: booking_id               │
+│ hotel, is_canceled,          │
+│ lead_time, country,          │
+│ market_segment, adr,         │
+│ ... (32 columns total)       │
+└──────────┬───────────────────┘
+           │ 1:N
+    ┌──────┴──────┐
+    ▼             ▼
+┌───────────┐ ┌───────────────┐
+│ <span class="highlight">incidents</span> │ │ <span class="highlight">manager_notes</span> │
+│ PK: id    │ │ PK: note_id   │
+│ FK: book  │ │ FK: booking   │
+│ type      │ │ note_text     │
+│ severity  │ │ author        │
+│ status    │ │ created_at    │
+│ desc      │ └───────────────┘
+│ reported  │
+│ created   │
+│ updated   │
+└───────────┘</div>
+
+    <h3>database.py — The connection</h3>
+<pre><code class="language-python">import os
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DEFAULT_DB_PATH = os.path.join(BASE_DIR, "hotel_bookings.db")
+DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{DEFAULT_DB_PATH}")
+
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False},  # Needed for SQLite + async workers
+    echo=False,
+)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+class Base(DeclarativeBase):
+    pass
+
+def get_db():
+    """Dependency injection — yields a session, always closes it."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()</code></pre>
+
+    <div class="callout">
+      <strong><code class="inline">check_same_thread=False</code></strong> — SQLite normally only allows the thread that created it to use it. FastAPI uses multiple async workers, so we disable this check. It's safe because SQLAlchemy's session management ensures proper access.
+    </div>
+
+    <h3>models.py — ORM models (key parts)</h3>
+<pre><code class="language-python">class Booking(Base):
+    __tablename__ = "bookings"
+    booking_id = Column(Integer, primary_key=True, autoincrement=True)
+    hotel = Column(String, nullable=False, index=True)
+    is_canceled = Column(Integer, nullable=False, default=0)
+    lead_time = Column(Integer)
+    # ... 32 columns mirroring the CSV ...
+
+    # Relationships — one booking can have many incidents and notes
+    incidents = relationship("Incident", back_populates="booking", cascade="all, delete-orphan")
+    notes = relationship("ManagerNote", back_populates="booking", cascade="all, delete-orphan")
+
+class Incident(Base):
+    __tablename__ = "incidents"
+    incident_id = Column(Integer, primary_key=True, autoincrement=True)
+    booking_id = Column(Integer, ForeignKey("bookings.booking_id"), nullable=False, index=True)
+    incident_type = Column(String, nullable=False)
+    severity = Column(Integer, nullable=False)
+    # ...
+    # Database-level constraints:
+    __table_args__ = (
+        CheckConstraint("severity >= 1 AND severity <= 5", name="check_severity_range"),
+        CheckConstraint("status IN ('open', 'investigating', 'resolved')", name="check_status_values"),
+    )</code></pre>
+
+    <div class="callout why">
+      <strong>Why denormalised?</strong> The bookings table keeps all 32 columns from the CSV in a flat structure rather than normalising hotel names, countries, etc. into separate lookup tables. At 119K records, the storage overhead is negligible, and it avoids complex JOINs for every query. The ORM makes it trivial to switch if needed.
+    </div>
+
+    <div class="callout why">
+      <strong>Why <code class="inline">cascade="all, delete-orphan"</code>?</strong> If a booking is deleted, all its related incidents and notes are automatically deleted too. No orphaned records.
+    </div>
+
+    <div class="quiz">
+      <h4>Quick check: Why does the Incident model have CheckConstraints?</h4>
+      <button onclick="quizAnswer(this, true)">Data integrity at DB level — even if the API is bypassed</button>
+      <button onclick="quizAnswer(this, false)">To make the code look more complex</button>
+      <button onclick="quizAnswer(this, false)">Pydantic requires them</button>
+      <div class="answer">CheckConstraints enforce rules at the database level. Even if someone bypasses the API and writes directly to the DB, severity must be 1–5 and status must be one of the allowed values. This is defence in depth — Pydantic validates at the API layer, CheckConstraints validate at the DB layer.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 5. AUTH                                                          -->
+<!-- ================================================================ -->
+<div class="section" id="s5">
+  <div class="section-header" onclick="toggle(this)">
+    <span class="num">5</span>
+    <h2>Authentication & Security</h2>
+    <span class="arrow">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>Dual authentication strategy</h3>
+    <p>The API supports <strong>two authentication methods</strong>, and any write endpoint accepts either one:</p>
+
+    <table>
+      <tr><th>Method</th><th>How</th><th>Best for</th></tr>
+      <tr>
+        <td><strong>API Key</strong></td>
+        <td>Send <code class="inline">X-API-Key: hotel-booking-dev-key-2025</code> header</td>
+        <td>Simple, stateless. Ideal for machine-to-machine or quick testing.</td>
+      </tr>
+      <tr>
+        <td><strong>JWT Bearer</strong></td>
+        <td>POST your API key to <code class="inline">/auth/token</code>, get back a JWT. Send <code class="inline">Authorization: Bearer &lt;token&gt;</code></td>
+        <td>Session-based. Token expires in 30 minutes. More secure for sustained access.</td>
+      </tr>
+    </table>
+
+    <h3>The auth flow</h3>
+    <div class="diagram"><span class="highlight">Option A: Direct API Key</span>
+Client → sends X-API-Key header → <span class="green">require_api_key()</span> checks it → ✅ Access
+
+<span class="highlight">Option B: JWT Flow</span>
+1. Client → POST /auth/token  { "api_key": "hotel-booking-dev-key-2025" }
+2. Server → validates key → creates JWT with exp, iss, sub claims → returns token
+3. Client → sends Authorization: Bearer &lt;token&gt; → <span class="green">require_api_key()</span> checks it → ✅ Access</div>
+
+    <h3>The core auth code (auth.py)</h3>
+<pre><code class="language-python"># Configuration
+API_KEY = os.environ.get("API_KEY", "hotel-booking-dev-key-2025")
+JWT_SECRET = hashlib.sha256(API_KEY.encode()).hexdigest()  # Derived from API key!
+
+async def require_api_key(
+    api_key: Optional[str] = Security(api_key_header),
+    bearer: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
+) -> str:
+    # Try API key first
+    if api_key is not None:
+        if hmac.compare_digest(api_key, API_KEY):  # ← CONSTANT-TIME comparison
+            return "api_key_user"
+        raise HTTPException(status_code=403, detail="Invalid API key.")
+
+    # Try Bearer token
+    if bearer is not None:
+        payload = verify_jwt_token(bearer.credentials)
+        return payload.get("sub", "jwt_user")
+
+    # Neither provided
+    raise HTTPException(status_code=401, detail="Authentication required...")</code></pre>
+
+    <div class="callout warn">
+      <strong>Critical concept: <code class="inline">hmac.compare_digest()</code></strong><br>
+      Normal string comparison (<code class="inline">==</code>) is vulnerable to <strong>timing attacks</strong>. It returns False as soon as it finds the first different character — so comparing "aaaa" vs "baaa" takes less time than "aaaa" vs "aaab". An attacker can guess the key one character at a time by measuring response times.<br><br>
+      <code class="inline">hmac.compare_digest()</code> always takes the <strong>same amount of time</strong> regardless of where the strings differ. This is called constant-time comparison. It's an OWASP best practice.
+    </div>
+
+    <h3>JWT token creation</h3>
+<pre><code class="language-python">def create_jwt_token(subject: str = "api_user") -> dict:
+    now = datetime.now(timezone.utc)
+    expires = now + timedelta(minutes=JWT_EXPIRY_MINUTES)  # 30 min default
+
+    payload = {
+        "sub": subject,     # Who the token is for
+        "iss": JWT_ISSUER,  # "hotel-booking-intelligence-api"
+        "iat": int(now.timestamp()),      # Issued at
+        "exp": int(expires.timestamp()),  # Expires at
+    }
+
+    token = pyjwt.encode(payload, JWT_SECRET, algorithm="HS256")
+    return {"access_token": token, ...}</code></pre>
+
+    <div class="callout">
+      <strong>JWT secret is derived from the API key</strong> via SHA-256: <code class="inline">JWT_SECRET = hashlib.sha256(API_KEY.encode()).hexdigest()</code>. This means if you change the API key, all existing JWT tokens are automatically invalidated. Neat security property.
+    </div>
+
+    <h3>What's protected vs public?</h3>
+    <table>
+      <tr><th>Access</th><th>Endpoints</th></tr>
+      <tr><td><strong>Public (no auth)</strong></td><td>All GET endpoints — browse bookings, view analytics, list incidents/notes, health check, dashboard</td></tr>
+      <tr><td><strong>Auth required</strong></td><td>POST, PUT, PATCH, DELETE on incidents and notes. AI risk assessment. Token issuance.</td></tr>
+    </table>
+
+    <div class="callout exam">
+      <strong>Exam tip:</strong> "Why are GETs public?" — The API holds read-only public data from a published dataset. Keeping GETs public makes it easy to explore and demo. Write operations (creating incidents, deleting records) require auth because they modify data. This is a proportionate security model.
+    </div>
+
+    <div class="quiz">
+      <h4>Quick check: What HTTP status code does the API return for a missing auth header vs an invalid API key?</h4>
+      <button onclick="quizAnswer(this, true)">401 for missing, 403 for invalid</button>
+      <button onclick="quizAnswer(this, false)">403 for both</button>
+      <button onclick="quizAnswer(this, false)">401 for both</button>
+      <div class="answer">401 Unauthorized means "you didn't identify yourself at all." 403 Forbidden means "you identified yourself but your credentials are wrong." This follows HTTP semantics correctly. The code: missing → 401 (with WWW-Authenticate header), wrong key → 403.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 6. ENDPOINTS                                                     -->
+<!-- ================================================================ -->
+<div class="section" id="s6">
+  <div class="section-header" onclick="toggle(this)">
+    <span class="num">6</span>
+    <h2>API Endpoints — The Full Map</h2>
+    <span class="arrow">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>All 21 endpoints</h3>
+    <table>
+      <tr><th>Method</th><th>Path</th><th>Auth?</th><th>Description</th></tr>
+      <tr><td><span class="tag get">GET</span></td><td>/</td><td>No</td><td>Root — API info + links</td></tr>
+      <tr><td><span class="tag get">GET</span></td><td>/health</td><td>No</td><td>Health check (DB status)</td></tr>
+      <tr><td><span class="tag get">GET</span></td><td>/dashboard</td><td>No</td><td>Serve the HTML dashboard</td></tr>
+      <tr><td colspan="4" style="background:var(--bg);color:var(--accent);font-weight:bold">Bookings</td></tr>
+      <tr><td><span class="tag get">GET</span></td><td>/bookings</td><td>No</td><td>List with filters + pagination</td></tr>
+      <tr><td><span class="tag get">GET</span></td><td>/bookings/{id}</td><td>No</td><td>Get single booking</td></tr>
+      <tr><td colspan="4" style="background:var(--bg);color:var(--accent);font-weight:bold">Incidents (Full CRUD)</td></tr>
+      <tr><td><span class="tag post">POST</span></td><td>/incidents</td><td>Yes</td><td>Create incident</td></tr>
+      <tr><td><span class="tag get">GET</span></td><td>/incidents</td><td>No</td><td>List with filters</td></tr>
+      <tr><td><span class="tag get">GET</span></td><td>/incidents/{id}</td><td>No</td><td>Get single incident</td></tr>
+      <tr><td><span class="tag put">PUT</span></td><td>/incidents/{id}</td><td>Yes</td><td>Full update</td></tr>
+      <tr><td><span class="tag patch">PATCH</span></td><td>/incidents/{id}</td><td>Yes</td><td>Partial update</td></tr>
+      <tr><td><span class="tag delete">DEL</span></td><td>/incidents/{id}</td><td>Yes</td><td>Delete</td></tr>
+      <tr><td colspan="4" style="background:var(--bg);color:var(--accent);font-weight:bold">Manager Notes (CRUD)</td></tr>
+      <tr><td><span class="tag post">POST</span></td><td>/notes</td><td>Yes</td><td>Create note</td></tr>
+      <tr><td><span class="tag get">GET</span></td><td>/notes</td><td>No</td><td>List notes</td></tr>
+      <tr><td><span class="tag get">GET</span></td><td>/notes/{id}</td><td>No</td><td>Get single note</td></tr>
+      <tr><td><span class="tag delete">DEL</span></td><td>/notes/{id}</td><td>Yes</td><td>Delete note</td></tr>
+      <tr><td colspan="4" style="background:var(--bg);color:var(--accent);font-weight:bold">Analytics</td></tr>
+      <tr><td><span class="tag get">GET</span></td><td>/analytics/cancellation-rate</td><td>No</td><td>Cancellation stats per hotel</td></tr>
+      <tr><td><span class="tag get">GET</span></td><td>/analytics/monthly-demand</td><td>No</td><td>Booking counts by month/year</td></tr>
+      <tr><td><span class="tag get">GET</span></td><td>/analytics/market-segment-performance</td><td>No</td><td>Volume, cancellations, ADR by segment</td></tr>
+      <tr><td colspan="4" style="background:var(--bg);color:var(--accent);font-weight:bold">Insights & AI</td></tr>
+      <tr><td><span class="tag get">GET</span></td><td>/insights/high-risk-bookings</td><td>No</td><td>Bookings above risk threshold</td></tr>
+      <tr><td><span class="tag get">GET</span></td><td>/insights/operational-hotspots</td><td>No</td><td>Hotels × months with most incidents</td></tr>
+      <tr><td><span class="tag post">POST</span></td><td>/insights/ai-risk-assessment/{id}</td><td>Yes</td><td>GPT-powered narrative analysis</td></tr>
+      <tr><td><span class="tag post">POST</span></td><td>/auth/token</td><td>—</td><td>Exchange API key for JWT</td></tr>
+    </table>
+
+    <h3>Pagination pattern</h3>
+<pre><code class="language-python"># bookings.py — every list endpoint follows this pattern:
+@router.get("", response_model=BookingListResponse)
+def list_bookings(
+    hotel: Optional[str] = Query(None),
+    country: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),  # Max 100
+    db: Session = Depends(get_db),
+):
+    query = db.query(Booking)
+    if hotel:
+        query = query.filter(Booking.hotel == hotel)   # Filter
+    total = query.count()
+    bookings = query.offset((page - 1) * per_page).limit(per_page).all()  # Paginate
+    return BookingListResponse(total=total, page=page, per_page=per_page, bookings=bookings)</code></pre>
+
+    <div class="callout">
+      <strong>REST principles you follow:</strong> Resource-oriented URIs (<code class="inline">/bookings</code>, <code class="inline">/incidents</code>), correct HTTP verb semantics (GET=read, POST=create, PUT=replace, PATCH=partial update, DELETE=remove), proper status codes (200/201/400/401/403/404/422), stateless (no server-side sessions), and pagination with skip/limit.
+    </div>
+
+    <h3>PUT vs PATCH — you have both!</h3>
+<pre><code class="language-python"># PUT — Full replacement. ALL fields required.
+class IncidentUpdate(BaseModel):
+    incident_type: IncidentType   # Required
+    severity: int                  # Required
+    description: str               # Required
+    reported_by: str               # Required
+    status: IncidentStatus         # Required
+
+# PATCH — Partial update. ALL fields optional.
+class IncidentPatch(BaseModel):
+    incident_type: Optional[IncidentType] = None
+    severity: Optional[int] = None
+    description: Optional[str] = None
+    reported_by: Optional[str] = None
+    status: Optional[IncidentStatus] = None
+
+# PATCH handler uses model_dump(exclude_unset=True) to only update provided fields:
+update_data = data.model_dump(exclude_unset=True)
+for field, value in update_data.items():
+    setattr(incident, field, value)</code></pre>
+
+    <div class="callout exam">
+      <strong>Exam tip:</strong> Having both PUT and PATCH shows you understand the semantic difference. PUT replaces the entire resource (idempotent). PATCH modifies only the specified fields. The <code class="inline">exclude_unset=True</code> trick with Pydantic is how you know which fields the client actually sent.
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 7. RISK SCORING                                                  -->
+<!-- ================================================================ -->
+<div class="section" id="s7">
+  <div class="section-header" onclick="toggle(this)">
+    <span class="num">7</span>
+    <h2>Risk Scoring — The Heuristic Algorithm</h2>
+    <span class="arrow">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>How it works</h3>
+    <p>The risk scoring service (<code class="inline">risk_scoring.py</code>) calculates a <strong>cancellation risk score from 0.0 to 1.0</strong> for any booking. It uses 6 weighted factors derived from domain analysis of the dataset.</p>
+
+    <table>
+      <tr><th>Factor</th><th>Condition</th><th>Weight</th><th>Rationale</th></tr>
+      <tr><td>Lead time</td><td>&gt; 300 days</td><td>+0.25</td><td>Very far-out bookings cancel more</td></tr>
+      <tr><td>Lead time</td><td>&gt; 200 days</td><td>+0.15</td><td>High but not extreme</td></tr>
+      <tr><td>Prev cancellations</td><td>≥ 3</td><td>+0.30</td><td>Strongest predictor — pattern behaviour</td></tr>
+      <tr><td>Prev cancellations</td><td>≥ 1</td><td>+0.20</td><td>Any history is a signal</td></tr>
+      <tr><td>Deposit type</td><td>"No Deposit"</td><td>+0.15</td><td>No financial commitment</td></tr>
+      <tr><td>Market segment</td><td>"Online TA"</td><td>+0.10</td><td>OTAs have higher cancel rates</td></tr>
+      <tr><td>Repeat guest</td><td>First-time (0)</td><td>+0.10</td><td>No loyalty attachment</td></tr>
+      <tr><td>Booking changes</td><td>Zero changes</td><td>+0.10</td><td>May indicate less engagement</td></tr>
+    </table>
+
+    <p>Scores are capped at 1.0 and classified into bands:</p>
+    <ul>
+      <li><strong style="color:var(--green)">Low (0.0–0.29):</strong> Minimal concern</li>
+      <li><strong style="color:var(--orange)">Medium (0.30–0.59):</strong> Monitor, consider outreach</li>
+      <li><strong style="color:var(--red)">High (0.60–1.0):</strong> Proactive intervention recommended</li>
+    </ul>
+
+    <h3>The full code</h3>
+<pre><code class="language-python">def calculate_risk_score(lead_time, previous_cancellations, deposit_type,
+                         market_segment, is_repeated_guest, booking_changes):
+    score = 0.0
+    factors = []
+
+    # Factor 1: Lead time
+    if lead_time > 300:
+        score += 0.25; factors.append("very_high_lead_time")
+    elif lead_time > 200:
+        score += 0.15; factors.append("high_lead_time")
+
+    # Factor 2: Previous cancellations — strongest single predictor
+    if previous_cancellations >= 3:
+        score += 0.30; factors.append("multiple_previous_cancellations")
+    elif previous_cancellations >= 1:
+        score += 0.20; factors.append("previous_cancellation_history")
+
+    # Factor 3: No deposit = lower commitment
+    if deposit_type == "No Deposit":
+        score += 0.15; factors.append("no_deposit")
+
+    # Factor 4: Online TAs have higher cancellation rates
+    if market_segment == "Online TA":
+        score += 0.10; factors.append("online_ta_segment")
+
+    # Factor 5: First-time guests cancel more
+    if is_repeated_guest == 0:
+        score += 0.10; factors.append("first_time_guest")
+
+    # Factor 6: Zero changes = less engagement
+    if booking_changes == 0:
+        score += 0.10; factors.append("no_booking_changes")
+
+    score = min(score, 1.0)  # Cap at 1.0
+
+    if score >= 0.60: band = "high"
+    elif score >= 0.30: band = "medium"
+    else: band = "low"
+
+    return round(score, 2), band, factors</code></pre>
+
+    <div class="callout why">
+      <strong>Why a heuristic instead of machine learning?</strong> A rule-based heuristic is <strong>transparent and interpretable</strong> — you can explain exactly why a booking scored 0.65 ("it had very high lead time + no deposit + first-time guest"). An ML model is a black box. For a coursework viva, being able to explain the algorithm is more valuable than raw accuracy. The code also acknowledges this as a limitation and suggests ML as future work.
+    </div>
+
+    <h3>How the high-risk endpoint uses it</h3>
+<pre><code class="language-python"># insights.py — high_risk_bookings endpoint
+# Processes in batches of 5000 to avoid loading all 119K records at once
+batch_size = 5000
+offset = 0
+while True:
+    batch = query.offset(offset).limit(batch_size).all()
+    if not batch:
+        break
+    for booking in batch:
+        score, band, factors = calculate_risk_score(...)
+        if score >= min_risk:  # Default threshold: 0.5
+            scored_bookings.append(...)
+    offset += batch_size</code></pre>
+
+    <div class="quiz">
+      <h4>Quick check: What's the maximum possible risk score for a single booking?</h4>
+      <button onclick="quizAnswer(this, true)">1.0 (capped)</button>
+      <button onclick="quizAnswer(this, false)">1.15 (all factors combined)</button>
+      <button onclick="quizAnswer(this, false)">0.90</button>
+      <div class="answer">The theoretical maximum is 0.25 + 0.30 + 0.15 + 0.10 + 0.10 + 0.10 = 1.00. But if all factors fired, the sum could go up to 1.00 exactly. The <code>min(score, 1.0)</code> cap ensures it never exceeds 1.0. Without the cap, a booking with >300 lead time AND 3+ cancellations AND all other factors would total 1.00 naturally.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 8. AI / LLM                                                      -->
+<!-- ================================================================ -->
+<div class="section" id="s8">
+  <div class="section-header" onclick="toggle(this)">
+    <span class="num">8</span>
+    <h2>AI Integration — GPT-Powered Risk Assessments</h2>
+    <span class="arrow">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>The pipeline</h3>
+    <p>When a client calls <code class="inline">POST /insights/ai-risk-assessment/{booking_id}</code>, here's what happens:</p>
+
+    <div class="diagram">1. <span class="highlight">Fetch booking</span> from database (by ID)
+       ↓
+2. <span class="highlight">Calculate risk score</span> using the heuristic (risk_scoring.py)
+       ↓
+3. <span class="highlight">Build prompt</span> with booking data + risk score + factors
+       ↓
+4. <span class="highlight">Call OpenAI</span> Chat Completions API (gpt-3.5-turbo)
+       ↓
+5. <span class="highlight">Return structured response</span>: score + band + factors + AI narrative
+
+<span class="orange">If OpenAI fails → graceful degradation → template-based response</span></div>
+
+    <h3>The router code (ai_insights.py)</h3>
+<pre><code class="language-python">@router.post("/ai-risk-assessment/{booking_id}", response_model=AIRiskAssessment,
+              dependencies=[Depends(require_api_key)])
+async def ai_risk_assessment(booking_id: int, db: Session = Depends(get_db)):
+    # Step 1: Fetch the booking
+    booking = db.query(Booking).filter(Booking.booking_id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail=f"Booking {booking_id} not found")
+
+    # Step 2: Calculate risk score (heuristic)
+    score, band, factors = calculate_risk_score(
+        lead_time=booking.lead_time or 0,
+        previous_cancellations=booking.previous_cancellations or 0,
+        deposit_type=booking.deposit_type or "",
+        market_segment=booking.market_segment or "",
+        is_repeated_guest=booking.is_repeated_guest or 0,
+        booking_changes=booking.booking_changes or 0,
+    )
+
+    # Step 3: Build booking context dict for the LLM
+    booking_data = {
+        "hotel": booking.hotel, "lead_time": booking.lead_time,
+        "arrival_date_month": booking.arrival_date_month,
+        "market_segment": booking.market_segment,
+        "deposit_type": booking.deposit_type,
+        "adr": booking.adr or 0,
+        # ... more fields ...
+    }
+
+    # Step 4: Call OpenAI (or fallback)
+    llm_result = await generate_risk_assessment(booking_data, score, band, factors)
+
+    # Step 5: Return structured response
+    return AIRiskAssessment(
+        booking_id=booking_id, hotel=booking.hotel,
+        risk_score=score, risk_band=band, risk_factors=factors,
+        ai_assessment=llm_result["assessment"],
+        ai_model=llm_result["model"], ai_source=llm_result["source"],
+    )</code></pre>
+
+    <h3>The LLM service (llm_analysis.py)</h3>
+    <p>Two key parts: the <strong>system prompt</strong> and the <strong>API call with graceful degradation</strong>.</p>
+
+<pre><code class="language-python"># System prompt — frames the LLM as a domain expert
+SYSTEM_PROMPT = """You are a senior hotel revenue management analyst. Given
+structured booking data and a computed risk score, provide a concise,
+professional risk assessment.
+
+Your response MUST follow this exact structure:
+1. **Risk Summary** (1-2 sentences)
+2. **Key Risk Factors** (2-4 bullet points)
+3. **Recommended Actions** (2-3 bullet points)
+4. **Revenue Impact** (1 sentence)
+
+Keep the total response under 200 words. Be specific — reference actual
+values from the booking data."""
+
+# The API call — async, non-blocking
+async def generate_risk_assessment(booking_data, risk_score, risk_band, risk_factors):
+    if not OPENAI_API_KEY:
+        return _template_fallback(...)  # No key? Still works.
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {OPENAI_API_KEY}"},
+                json={
+                    "model": OPENAI_MODEL,       # Default: gpt-3.5-turbo
+                    "messages": [
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    "temperature": 0.3,   # Low = more deterministic/factual
+                    "max_tokens": 400,    # Keep responses concise + cost-effective
+                },
+            )
+            # ... parse response ...
+    except Exception:
+        return _template_fallback(...)  # Any error → still returns useful content</code></pre>
+
+    <div class="callout warn">
+      <strong>Graceful degradation (<code class="inline">_template_fallback</code>)</strong><br>
+      This is one of the most important design choices. If OpenAI is down, if the API key is wrong, if the network fails — the endpoint <strong>still returns a valid, schema-identical response</strong>. The fallback generates a template-based assessment using the same risk factors. The client never sees an error; the <code class="inline">ai_source</code> field changes from "openai" to "template" so you know which path was taken.
+    </div>
+
+    <div class="callout">
+      <strong>Why <code class="inline">temperature: 0.3</code>?</strong> — Temperature controls randomness. 0 = fully deterministic, 1 = creative. We want factual, consistent risk assessments, not creative writing. 0.3 gives slightly varied phrasing while staying factual.
+    </div>
+
+    <div class="callout">
+      <strong>Why <code class="inline">httpx.AsyncClient</code> not <code class="inline">requests</code>?</strong> — <code class="inline">requests</code> is synchronous; it would block the entire FastAPI event loop while waiting for OpenAI (up to 30 seconds). <code class="inline">httpx</code> is async-native, so other requests can be served while waiting for the LLM. This is non-blocking I/O.
+    </div>
+
+    <div class="callout exam">
+      <strong>Exam tip:</strong> The AI integration is at <strong>three levels</strong>: (1) ChatGPT was used as a development tool to help scaffold code, (2) Prism was used to draft the LaTeX report, and (3) GPT is embedded as a <em>runtime feature</em> of the API itself. Level 3 is the "creative application of GenAI" the rubric rewards. You built an AI-powered product, not just used AI to build a product.
+    </div>
+
+    <div class="quiz">
+      <h4>Quick check: What happens if someone calls /insights/ai-risk-assessment/1 but no OPENAI_API_KEY is configured?</h4>
+      <button onclick="quizAnswer(this, false)">500 Internal Server Error</button>
+      <button onclick="quizAnswer(this, true)">200 OK with a template-based assessment (ai_source: "template")</button>
+      <button onclick="quizAnswer(this, false)">503 Service Unavailable</button>
+      <div class="answer">The endpoint always succeeds. The <code>_template_fallback()</code> function generates a structured assessment using the same heuristic data. The response has <code>ai_source: "template"</code> and <code>ai_model: "template-based (no LLM API key configured)"</code>. This is graceful degradation — the API contract never breaks.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 9. DASHBOARD                                                     -->
+<!-- ================================================================ -->
+<div class="section" id="s9">
+  <div class="section-header" onclick="toggle(this)">
+    <span class="num">9</span>
+    <h2>Dashboard — Frontend</h2>
+    <span class="arrow">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>What it is</h3>
+    <p>A single-page HTML file (<code class="inline">static/index.html</code>) served by FastAPI at <code class="inline">/dashboard</code>. It's vanilla HTML/CSS/JavaScript — no frameworks, no build step. Uses <strong>Chart.js</strong> for visualisations.</p>
+
+    <h3>How it's served</h3>
+<pre><code class="language-python"># main.py
+# Mount the /static directory for CSS/JS assets
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+# Serve the dashboard at /dashboard
+@app.get("/dashboard", include_in_schema=False)
+def dashboard():
+    return FileResponse(os.path.join(static_dir, "index.html"))</code></pre>
+
+    <p><code class="inline">include_in_schema=False</code> hides this from Swagger docs — it's a UI page, not an API endpoint.</p>
+
+    <h3>Dashboard tabs</h3>
+    <ol>
+      <li><strong>Overview</strong> — total bookings, cancellation rate, avg ADR, avg lead time</li>
+      <li><strong>Monthly Demand</strong> — Chart.js bar chart from <code class="inline">/analytics/monthly-demand</code></li>
+      <li><strong>Market Segments</strong> — from <code class="inline">/analytics/market-segment-performance</code></li>
+      <li><strong>Risk Analysis</strong> — table of high-risk bookings from <code class="inline">/insights/high-risk-bookings</code> with an ✨ Analyse button that calls the AI endpoint inline</li>
+    </ol>
+
+    <div class="callout why">
+      <strong>Why include a dashboard?</strong> It demonstrates full-stack delivery — the API isn't just an abstract JSON producer, it powers a real visual interface. It shows the API's data flowing into something a hotel manager could actually use. The AI Analyse button ties the dashboard directly to the GPT integration.
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 10. TESTING                                                      -->
+<!-- ================================================================ -->
+<div class="section" id="s10">
+  <div class="section-header" onclick="toggle(this)">
+    <span class="num">10</span>
+    <h2>Testing Strategy</h2>
+    <span class="arrow">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>58 tests across 6 modules</h3>
+    <table>
+      <tr><th>Test file</th><th>Tests</th><th>What it covers</th></tr>
+      <tr><td>test_bookings.py</td><td>7</td><td>Pagination, filters, 404 on invalid ID</td></tr>
+      <tr><td>test_incidents.py</td><td>12</td><td>Full CRUD cycle, validation, FK enforcement</td></tr>
+      <tr><td>test_notes.py</td><td>8</td><td>CRUD, FK validation, filters</td></tr>
+      <tr><td>test_analytics.py</td><td>9</td><td>Cancellation stats, monthly demand, market segments</td></tr>
+      <tr><td>test_auth.py</td><td>9</td><td>API key auth (4), JWT auth (4), health check (1)</td></tr>
+      <tr><td>test_ai_insights.py</td><td>7</td><td>AI response schema, 404, auth, fallback, high-risk results</td></tr>
+    </table>
+
+    <h3>Test isolation — how it works</h3>
+<pre><code class="language-python"># conftest.py — override the database for tests
+@pytest.fixture
+def db_session():
+    """Create a fresh in-memory SQLite database for each test."""
+    engine = create_engine("sqlite:///:memory:")  # ← In-memory, not on disk!
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    yield session
+    session.close()
+
+@pytest.fixture
+def client(db_session):
+    """Test client with the overridden DB."""
+    def override_get_db():
+        yield db_session
+    app.dependency_overrides[get_db] = override_get_db  # ← The magic
+    yield TestClient(app)
+    app.dependency_overrides.clear()</code></pre>
+
+    <div class="callout">
+      <strong>Key pattern: <code class="inline">dependency_overrides</code></strong><br>
+      FastAPI lets you replace any <code class="inline">Depends()</code> dependency for testing. We replace <code class="inline">get_db</code> with a version that returns an in-memory SQLite session. Each test gets a fresh, empty database. Tests run in <strong>0.87 seconds</strong> total because there's no disk I/O.
+    </div>
+
+    <h3>What the tests prove</h3>
+    <ul>
+      <li><strong>Auth gates work</strong> — POST/PUT/PATCH/DELETE without a key → 401</li>
+      <li><strong>Validation works</strong> — invalid severity (6) → 422, missing fields → 422</li>
+      <li><strong>FK integrity</strong> — creating an incident for a non-existent booking → 404</li>
+      <li><strong>Filters work</strong> — filter by hotel, by status, by month — correct results returned</li>
+      <li><strong>AI fallback works</strong> — the template response has the correct schema when no OpenAI key</li>
+      <li><strong>Edge cases</strong> — empty results, zero records, boundary values</li>
+    </ul>
+
+    <div class="callout warn">
+      <strong>Acknowledged limitation:</strong> No end-to-end (E2E) tests. The test pyramid has unit/integration tests but no browser-based or multi-step workflow tests. This is mentioned in the report as future work.
+    </div>
+
+    <h3>CI Pipeline — GitHub Actions</h3>
+<pre><code class="language-python"># .github/workflows/ci.yml (simplified)
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]  # Three versions!
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+      - run: pip install -r requirements.txt
+      - run: pytest --tb=short -q</code></pre>
+
+    <div class="callout exam">
+      <strong>Exam tip:</strong> "Why test across three Python versions?" — It catches compatibility issues early. If a feature works on 3.12 but breaks on 3.10, CI catches it. This is especially important when using newer language features or library versions.
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 11. DEPLOYMENT                                                   -->
+<!-- ================================================================ -->
+<div class="section" id="s11">
+  <div class="section-header" onclick="toggle(this)">
+    <span class="num">11</span>
+    <h2>Deployment & DevOps</h2>
+    <span class="arrow">▼</span>
+  </div>
+  <div class="section-body">
+    <h3>Railway — how it works</h3>
+    <p><a href="https://railway.app" style="color:var(--accent)">Railway</a> is a Platform-as-a-Service (PaaS). The deployment flow:</p>
+    <ol>
+      <li>You push to <code class="inline">main</code> on GitHub</li>
+      <li>Railway detects the push (webhook)</li>
+      <li>Nixpacks auto-detects it's a Python project (from <code class="inline">requirements.txt</code>)</li>
+      <li>Builds and deploys automatically</li>
+      <li>HTTPS is automatic via Railway's reverse proxy</li>
+      <li>Environment variables (API_KEY, OPENAI_API_KEY, JWT_SECRET, etc.) are injected at runtime</li>
+    </ol>
+
+    <h3>Twelve-Factor App alignment</h3>
+    <p>The project follows several principles from the <a href="https://12factor.net" style="color:var(--accent)">Twelve-Factor App</a> methodology (Wiggins, 2011):</p>
+    <table>
+      <tr><th>Factor</th><th>How we implement it</th></tr>
+      <tr><td><strong>I. Codebase</strong></td><td>One repo on GitHub, tracked in version control</td></tr>
+      <tr><td><strong>II. Dependencies</strong></td><td><code class="inline">requirements.txt</code> declares all dependencies explicitly</td></tr>
+      <tr><td><strong>III. Config</strong></td><td>All config via environment variables (API_KEY, DATABASE_URL, OPENAI_API_KEY, etc.)</td></tr>
+      <tr><td><strong>IV. Backing services</strong></td><td>SQLite is an attached resource; swap to PostgreSQL by changing DATABASE_URL</td></tr>
+      <tr><td><strong>V. Build, release, run</strong></td><td>Railway handles build → release → run stages</td></tr>
+    </table>
+
+    <h3>Health check endpoint</h3>
+<pre><code class="language-python">@app.get("/health")
+def health_check():
+    try:
+        db = SessionLocal()
+        db.execute(sqlalchemy.text("SELECT 1"))  # Quick DB probe
+        db.close()
+        db_status = "connected"
+    except Exception as exc:
+        db_status = f"error: {exc}"
+    return {"status": "healthy", "database": db_status, "version": "1.0.0"}</code></pre>
+
+    <div class="callout">
+      <strong>Why a health check?</strong> Railway (and most PaaS platforms) can ping this endpoint to confirm the service is alive. If it returns an error, the platform can auto-restart. It also verifies database connectivity, not just that the Python process is running.
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 12. VIVA PREP                                                    -->
+<!-- ================================================================ -->
+<div class="section" id="s12">
+  <div class="section-header" onclick="toggle(this)">
+    <span class="num">12</span>
+    <h2>Viva Preparation — Likely Questions & Answers</h2>
+    <span class="arrow">▼</span>
+  </div>
+  <div class="section-body">
+
+    <div class="quiz">
+      <h4>"What does your API do?"</h4>
+      <div class="answer" style="display:block;background:rgba(88,166,255,.06)">
+        <p>"It's a RESTful intelligence layer over 119,000 real hotel booking records. Hotel managers can browse and filter bookings, log operational incidents with full CRUD, view analytics like cancellation rates and demand trends, and get AI-powered risk assessments that predict which bookings are likely to cancel — with actionable recommendations. It's built with FastAPI, uses dual authentication, and is deployed live on Railway."</p>
+      </div>
+    </div>
+
+    <div class="quiz">
+      <h4>"Why did you choose FastAPI?"</h4>
+      <div class="answer" style="display:block;background:rgba(88,166,255,.06)">
+        <p>"Three reasons: it auto-generates interactive Swagger documentation from Python type hints — the examiner can explore every endpoint without reading docs. It has built-in request validation through Pydantic, so invalid data is rejected before it hits the database. And it supports async natively, which I needed for the non-blocking OpenAI API calls."</p>
+      </div>
+    </div>
+
+    <div class="quiz">
+      <h4>"Explain your authentication system."</h4>
+      <div class="answer" style="display:block;background:rgba(88,166,255,.06)">
+        <p>"Dual auth — API keys for quick access, JWT tokens for session-based access. API keys are checked using constant-time comparison with hmac.compare_digest() to prevent timing attacks. JWT tokens follow RFC 7519 with 30-minute expiry. The JWT secret is derived from the API key via SHA-256, so changing the key invalidates all tokens. Read endpoints are public; write endpoints require auth."</p>
+      </div>
+    </div>
+
+    <div class="quiz">
+      <h4>"How does your AI integration work?"</h4>
+      <div class="answer" style="display:block;background:rgba(88,166,255,.06)">
+        <p>"There's a four-step pipeline. First, fetch the booking from the database. Second, calculate a heuristic risk score using six weighted factors. Third, build a structured prompt with the booking data and risk score, and send it to OpenAI's Chat Completions API. Fourth, return the combined structured data plus the LLM narrative. If OpenAI is unavailable, the endpoint gracefully degrades to a template-based response with the same schema — the API contract never breaks."</p>
+      </div>
+    </div>
+
+    <div class="quiz">
+      <h4>"What are the limitations of your project?"</h4>
+      <div class="answer" style="display:block;background:rgba(88,166,255,.06)">
+        <p>"SQLite limits write concurrency — in production I'd use PostgreSQL. There's no OAuth2 scopes or RBAC — all authenticated users have the same permissions. The risk heuristic is rule-based, not ML-trained — a production system would use a trained classifier. The LLM calls are synchronous within a request — an async task queue like Celery would be better for long-running AI analysis. And there's no end-to-end testing."</p>
+      </div>
+    </div>
+
+    <div class="quiz">
+      <h4>"What would you do differently / as future work?"</h4>
+      <div class="answer" style="display:block;background:rgba(88,166,255,.06)">
+        <p>"Migrate to PostgreSQL for production concurrency. Add OAuth2 scopes for fine-grained permissions. Train an ML model on the cancellation data instead of a heuristic. Use an async task queue for LLM calls so the client doesn't wait. Add WebSocket notifications for real-time risk alerts. And implement comprehensive E2E testing."</p>
+      </div>
+    </div>
+
+    <div class="quiz">
+      <h4>"How did you use Generative AI in this project?"</h4>
+      <div class="answer" style="display:block;background:rgba(88,166,255,.06)">
+        <p>"Three levels. First, ChatGPT (GPT-4) as a development tool — it helped scaffold the project structure, debug issues, and iterate on the architecture. Second, Prism for drafting the LaTeX report — I provided detailed technical context and it generated the document, which I then reviewed and refined. Third, and most importantly, GPT-3.5-turbo is embedded as a runtime feature of the API itself — the AI risk assessment endpoint sends booking data to the LLM and returns natural language analysis. That third level is the creative application — the API is AI-powered, not just AI-built."</p>
+      </div>
+    </div>
+
+    <div class="quiz">
+      <h4>"What's the difference between /insights/high-risk-bookings and /insights/ai-risk-assessment?"</h4>
+      <div class="answer" style="display:block;background:rgba(88,166,255,.06)">
+        <p>"High-risk-bookings is a GET endpoint that scans all non-cancelled bookings through the heuristic algorithm and returns those above a risk threshold. It's pure computation — fast but gives just numbers and factor labels. AI-risk-assessment is a POST endpoint for a single booking that combines the heuristic score with a GPT narrative — it explains WHY the booking is risky in plain English and gives actionable recommendations. One is a batch scanner, the other is a deep-dive analyser."</p>
+      </div>
+    </div>
+
+    <div class="quiz">
+      <h4>"Why is POST used for AI risk assessment instead of GET?"</h4>
+      <div class="answer" style="display:block;background:rgba(88,166,255,.06)">
+        <p>"The AI risk assessment has a side effect — it calls the OpenAI API, which costs money and changes state externally (token usage, billing). GET should be safe and idempotent, meaning it shouldn't cause side effects. POST is appropriate because each call triggers an external API call with a cost. It also allows us to require authentication, which aligns with this being a premium feature."</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+hljs.highlightAll();
+
+function toggle(header) {
+  header.classList.toggle('collapsed');
+  const body = header.nextElementSibling;
+  body.classList.toggle('hidden');
+}
+
+function quizAnswer(btn, isCorrect) {
+  const quiz = btn.closest('.quiz');
+  const buttons = quiz.querySelectorAll('button');
+  const answer = quiz.querySelector('.answer');
+
+  buttons.forEach(b => {
+    b.disabled = true;
+    b.classList.remove('correct', 'wrong');
+  });
+
+  btn.classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) {
+    buttons.forEach(b => {
+      if (b.getAttribute('onclick').includes('true')) b.classList.add('correct');
+    });
+  }
+  answer.style.display = 'block';
+}
+
+// Sticky nav active state
+const sections = document.querySelectorAll('.section');
+const navLinks = document.querySelectorAll('.nav a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 100) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+</script>
+</body>
+</html>
